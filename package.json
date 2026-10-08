@@ -1,6 +1,6 @@
 {
   "name": "qits-platform-spa-system",
-  "version": "2026.1007.151803",
+  "version": "2026.1008.103119",
   "private": true,
   "description": "The system frontend: an Angular application that shows the machine the platform runs on — a live glances terminal, the swarm, and each node's docker resources with a shell into any container. It ships no image — qits-platform-system serves it via Quinoa at the root of its own host.",
   "license": "MIT",
