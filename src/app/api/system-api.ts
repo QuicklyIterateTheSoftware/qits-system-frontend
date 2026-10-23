@@ -8,15 +8,22 @@ import {
   type ConfigSummaryDto,
   type ContainerLogsDto,
   type ContainerSummaryDto,
+  type CreateTargetDto,
   type CreateTerminalDto,
+  type HealthCheckRequestedDto,
   type ImageSummaryDto,
+  type LeaseDto,
   type NetworkSummaryDto,
   type NodeDetailDto,
   type NodeSummaryDto,
   type OverviewDto,
+  type PatchTargetDto,
   type SecretSummaryDto,
   type ServiceDetailDto,
   type ServiceSummaryDto,
+  type TargetDto,
+  type TargetHealthReportDto,
+  type TargetRegistrationDto,
   type TerminalDto,
   type TerminalShell,
   type VolumeSummaryDto,
@@ -177,6 +184,99 @@ export class SystemApi {
     return firstValueFrom(this.http.post<TerminalDto>(`${this.base}/system/api/terminals`, body));
   }
 
+  // --- targets (epic qits-1481) -------------------------------------------------------------
+
+  /** Every target, by name. */
+  targets(): Promise<readonly TargetDto[]> {
+    return firstValueFrom(this.http.get<TargetDto[]>(`${this.base}/system/api/targets`));
+  }
+
+  target(id: string): Promise<TargetDto> {
+    return firstValueFrom(this.http.get<TargetDto>(this.targetUrl(id)));
+  }
+
+  /** Declares a target; answers its install line and registration token, once. */
+  createTarget(body: CreateTargetDto): Promise<TargetRegistrationDto> {
+    return firstValueFrom(
+      this.http.post<TargetRegistrationDto>(`${this.base}/system/api/targets`, body),
+    );
+  }
+
+  /** Changes a target's description or minimums. 409 `MINIMUMS_EXCEED_TOTAL` when their sum is
+   * above the total the runner last reported. */
+  patchTarget(id: string, body: PatchTargetDto): Promise<TargetDto> {
+    return firstValueFrom(this.http.patch<TargetDto>(this.targetUrl(id), body));
+  }
+
+  /** Decommissions a target. 409 `TARGET_BUSY` while it holds a lease that has not ended. */
+  deleteTarget(id: string): Promise<void> {
+    return firstValueFrom(this.http.delete<void>(this.targetUrl(id)));
+  }
+
+  /** Replaces a target's registration token; answers a new one-time install line. */
+  rotateTargetRegistrationToken(id: string): Promise<TargetRegistrationDto> {
+    return firstValueFrom(
+      this.http.post<TargetRegistrationDto>(`${this.targetUrl(id)}/registration-token`, {}),
+    );
+  }
+
+  /** Lifts a target's quarantine. */
+  greenlightTarget(id: string): Promise<TargetDto> {
+    return firstValueFrom(this.http.post<TargetDto>(`${this.targetUrl(id)}/greenlight`, {}));
+  }
+
+  /** Asks a connected target for a health check. 409 `TARGET_UNAVAILABLE` when it is not
+   * connected. The answer is only an acknowledgement; read {@link targetHealth} once it settles. */
+  requestTargetHealthCheck(id: string): Promise<HealthCheckRequestedDto> {
+    return firstValueFrom(
+      this.http.post<HealthCheckRequestedDto>(`${this.targetUrl(id)}/healthcheck`, {}),
+    );
+  }
+
+  /** Asks a connected target to probe its sign-in now. 409 `TARGET_UNAVAILABLE` when it is not
+   * connected. */
+  requestTargetLoginCheck(id: string): Promise<void> {
+    return firstValueFrom(this.http.post<void>(`${this.targetUrl(id)}/login-check`, {}));
+  }
+
+  /**
+   * A target's newest settled health check, or `null` when none has settled yet.
+   *
+   * The service answers 204 for "nothing yet", which carries no body for `HttpClient` to parse —
+   * `observe: 'response'` is what lets this read the status without `HttpClient` trying anyway.
+   */
+  async targetHealth(id: string): Promise<TargetHealthReportDto | null> {
+    const response = await firstValueFrom(
+      this.http.get<TargetHealthReportDto>(`${this.targetUrl(id)}/health`, {
+        observe: 'response',
+      }),
+    );
+    return response.status === 204 ? null : response.body;
+  }
+
+  /**
+   * The generic install script the install line pipes to `sh` — carries no secret, so it is safe
+   * to show an operator who wants to read it before pasting the line that pipes it in.
+   */
+  targetInstallScript(): Promise<string> {
+    return firstValueFrom(
+      this.http.get(`${this.base}/system/api/targets/install.sh`, { responseType: 'text' }),
+    );
+  }
+
+  /** The leases of one target — type, owner, state and detail. */
+  targetLeases(targetId: string): Promise<readonly LeaseDto[]> {
+    return firstValueFrom(
+      this.http.get<LeaseDto[]>(`${this.base}/system/api/leases`, {
+        params: new HttpParams().set('targetId', targetId),
+      }),
+    );
+  }
+
+  private targetUrl(id: string): string {
+    return `${this.base}/system/api/targets/${encodeURIComponent(id)}`;
+  }
+
   private swarmUrl(kind: string, id: string): string {
     return `${this.base}/system/api/swarm/${kind}/${encodeURIComponent(id)}`;
   }
@@ -205,4 +305,23 @@ export function isNodeRemote(error: unknown): boolean {
     error.error !== null &&
     (error.error as { code?: unknown }).code === NODE_REMOTE
   );
+}
+
+/**
+ * The `code` of a failed write's `{"message": …, "code": …}` body, when it carries one.
+ *
+ * The targets doors answer several named codes on the one status (409 alone carries
+ * `MINIMUMS_EXCEED_TOTAL`, `TARGET_BUSY` and `TARGET_UNAVAILABLE`), so a caller that must read one
+ * apart from the others asks this rather than growing a fourth `isXxx` beside {@link isNodeRemote}.
+ */
+export function errorCode(error: unknown): string | undefined {
+  if (
+    !(error instanceof HttpErrorResponse) ||
+    typeof error.error !== 'object' ||
+    error.error === null
+  ) {
+    return undefined;
+  }
+  const code = (error.error as { code?: unknown }).code;
+  return typeof code === 'string' ? code : undefined;
 }

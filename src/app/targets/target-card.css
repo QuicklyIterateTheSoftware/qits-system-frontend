@@ -1,0 +1,145 @@
+/* One target's card: the title row, the slot and sign-in strips, the edit form and the actions
+   row — everything beyond the shared `page.css` furniture the leases table reuses. */
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.375rem;
+}
+
+.title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.name {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.subtle {
+  color: #6b7280;
+  font-size: 0.85rem;
+}
+
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.slots,
+.login,
+.health,
+.edit,
+.actions,
+.leases {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid #f3f4f6;
+}
+
+.slots-total {
+  margin: 0;
+  font-weight: 600;
+}
+
+.slot-types {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: #374151;
+  font-size: 0.85rem;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.label {
+  font-weight: 600;
+  color: #374151;
+  font-size: 0.85rem;
+}
+
+.presence {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+}
+
+.note {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.85rem;
+}
+
+.description {
+  margin: 0;
+  color: #374151;
+}
+
+.checks {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.85rem;
+}
+
+.checks li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.fields {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.85rem;
+}
+
+.field span {
+  color: #6b7280;
+}
+
+.field.narrow {
+  width: 6rem;
+}
+
+.input {
+  height: 2rem;
+  min-width: 10rem;
+  padding: 0 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.3rem;
+  font-size: 0.9rem;
+}
+
+.field.narrow .input {
+  min-width: 0;
+  width: 100%;
+}

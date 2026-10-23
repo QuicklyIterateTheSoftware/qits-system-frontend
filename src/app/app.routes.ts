@@ -46,6 +46,11 @@ export const routes: Routes = [
         loadComponent: () => import('./overview/overview-page').then((m) => m.OverviewPage),
       },
       {
+        path: 'targets',
+        pathMatch: 'full',
+        loadComponent: () => import('./targets/targets-page').then((m) => m.TargetsPage),
+      },
+      {
         path: 'swarm/nodes',
         pathMatch: 'full',
         loadComponent: () => import('./swarm/nodes-page').then((m) => m.NodesPage),

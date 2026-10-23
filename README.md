@@ -18,6 +18,11 @@ instead of rewriting an address this app does not serve. The API and the termina
 - **Overview** — a live `glances` terminal for the host, above a line of host facts (hostname, OS,
   CPUs, memory, docker version, swarm state and node count). The glances session is shared: this
   page finds or creates it and only detaches when you leave. `Stop glances` is the one way to end it.
+- **Targets** (epic qits-1481) — the swarms `qits-system-runner-daemon` holds typed CI, workspace
+  and desk slots on: each target's slots against its minimums, its claude/kimi sign-in, its
+  quarantine and its last health check. Declare a target and the page shows its one-time install
+  line; every target offers rotating its registration token, a health or login check, greenlight,
+  delete (refused with `TARGET_BUSY` while it holds a live lease) and its own leases.
 - **Swarm** — nodes, services (with their tasks), configs (with their data) and secrets (metadata
   only, because swarm does not expose the values).
 - **A node** — its containers, images, volumes and networks, as child tabs. Every container row

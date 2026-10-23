@@ -16,11 +16,16 @@ interface Entry {
  *
  * **The headings are not links**, and that is the whole reason they are rows in this list rather
  * than a second structure: "System" and "Swarm" are two questions about one machine, and a reader
- * scanning five entries needs to know which of them is cluster-wide before clicking. Nothing sits
+ * scanning six entries needs to know which of them is cluster-wide before clicking. Nothing sits
  * at `/swarm` on its own, so a link there would be a dead end.
  *
  * **A terminal belongs to whatever opened it.** An exec terminal is reached from a node's container
  * table, so `terminals/:id` keeps Nodes current; the glances terminal is the overview itself.
+ *
+ * **Targets sits under "System" beside Overview, not under "Swarm" (epic qits-1481).** A target is
+ * a machine qits-system-runner-daemon can place CI, workspace or desk slots on — the fleet, not the
+ * one swarm Overview and Swarm already describe — so it answers the same question Overview does
+ * ("what is the platform running on") rather than Swarm's ("what is this one swarm doing").
  */
 const ENTRIES: readonly Entry[] = [
   { heading: 'System' },
@@ -28,6 +33,11 @@ const ENTRIES: readonly Entry[] = [
     path: '/',
     label: 'Overview',
     matches: (segments) => segments.length === 0,
+  },
+  {
+    path: '/targets',
+    label: 'Targets',
+    matches: (segments) => segments[0] === 'targets',
   },
   { heading: 'Swarm' },
   {

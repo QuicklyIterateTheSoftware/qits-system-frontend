@@ -242,3 +242,133 @@ export interface ErrorDto {
   readonly message: string;
   readonly code?: string;
 }
+
+/**
+ * Targets, leases and work volumes — `eu.wohlben.qits.system.targets`, the one module of this
+ * service that writes (epic qits-1481, dossier "Targets in qits-system: data, doors, allocation").
+ * A target is a swarm this service's runner holds typed slots on; a lease is one owner's claim on a
+ * slot of one type.
+ */
+
+/** Slots per type. Always filled on a read — `TargetViews.SlotCounts.of` defaults every member to
+ * `0` — so a target's `minimums` and `used` are never partial; only a write may omit a member. */
+export interface SlotCountsDto {
+  readonly ci: number;
+  readonly workspace: number;
+  readonly desk: number;
+}
+
+/** A target's sign-in state for each harness. `null` is never probed; `UNKNOWN` is probed and
+ * inconclusive — two different facts the page must not collapse into one dash. */
+export interface TargetLoginDto {
+  readonly claude: string | null;
+  readonly kimi: string | null;
+  readonly checkedAt: string | null;
+}
+
+/** `GET /system/api/targets` and `/targets/{id}`: everything the list and the card draw. */
+export interface TargetDto {
+  readonly id: string;
+  readonly name: string;
+  readonly description: string | null;
+  readonly slotsTotal: number;
+  readonly minimums: SlotCountsDto;
+  readonly used: SlotCountsDto;
+  readonly login: TargetLoginDto;
+  readonly credentialVolume: string | null;
+  readonly loginCommand: string | null;
+  readonly kimiLoginCommand: string | null;
+  readonly connected: boolean;
+  readonly connectedSince: string | null;
+  readonly quarantined: boolean;
+  readonly quarantineReason: string | null;
+  readonly quarantinedAt: string | null;
+  readonly runnerVersion: string | null;
+  readonly registered: boolean;
+  readonly registeredAt: string | null;
+  readonly lastSeenAt: string | null;
+  readonly lastHealthCheckAt: string | null;
+  readonly lastHealthCheckOk: boolean | null;
+  readonly createdAt: string | null;
+}
+
+/**
+ * What `POST /targets`, and `POST /targets/{id}/registration-token`, answer: the target, and its
+ * one-use registration token carried in `installLine` once. Neither field is ever shown again.
+ */
+export interface TargetRegistrationDto {
+  readonly target: TargetDto;
+  readonly registrationToken: string;
+  readonly installLine: string;
+}
+
+/** `POST /targets` — minimums default to 0 where left out. */
+export interface CreateTargetDto {
+  readonly name: string;
+  readonly description?: string;
+  readonly minimums?: Partial<SlotCountsDto>;
+}
+
+/** `PATCH /targets/{id}` — a blank description clears it, an absent one leaves it; an absent
+ * minimums member leaves its own value. */
+export interface PatchTargetDto {
+  readonly description?: string | null;
+  readonly minimums?: Partial<SlotCountsDto>;
+}
+
+/** `POST /targets/{id}/healthcheck`, 202: the request this ask was given, settled later. */
+export interface HealthCheckRequestedDto {
+  readonly requestId: string;
+}
+
+/** One named check inside a settled health report. */
+export interface TargetHealthCheckDto {
+  readonly name: string;
+  readonly ok: boolean;
+  readonly detail?: string | null;
+}
+
+/** `GET /targets/{id}/health`, 200: the newest settled report. A 204 (nothing has settled yet) is
+ * read as `null` by {@link SystemApi.targetHealth}. */
+export interface TargetHealthReportDto {
+  readonly at: string;
+  readonly ok: boolean;
+  readonly detail?: string | null;
+  readonly requestId?: string | null;
+  readonly checks: readonly TargetHealthCheckDto[];
+}
+
+/** `CI`, `WORKSPACE` or `DESK` — a plain string on the wire, like every other enum here. */
+export type SlotType = string;
+
+/** `QUEUED`, `GRANTED`, `RUNNING`, `EXITED`, `FAILED`, `ENDING` or `ENDED` — plain, not a union. */
+export type LeaseState = string;
+
+/** `GET /leases`: one owner's claim on a slot of one type, on one target. */
+export interface LeaseDto {
+  readonly id: string;
+  readonly slotType: SlotType;
+  readonly ownerApp: string;
+  readonly ownerRef: string;
+  readonly projectId: string | null;
+  readonly workKey: string | null;
+  readonly pinTargetId: string | null;
+  readonly targetId: string | null;
+  readonly priority: number;
+  readonly state: LeaseState;
+  readonly spec?: unknown;
+  readonly specHash?: string | null;
+  readonly adopt?: unknown;
+  readonly exitCode: number | null;
+  readonly detail: string | null;
+  readonly requestedAt: string | null;
+  readonly grantedAt: string | null;
+  readonly startedAt: string | null;
+  readonly endedAt: string | null;
+}
+
+/** `PATCH /targets/{id}`, 409: the minimums' sum is above the total the runner reported. */
+export const MINIMUMS_EXCEED_TOTAL = 'MINIMUMS_EXCEED_TOTAL';
+
+/** `DELETE /targets/{id}`, 409: it still holds a lease that has not ended. */
+export const TARGET_BUSY = 'TARGET_BUSY';

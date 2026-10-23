@@ -1,0 +1,256 @@
+<article class="card" [attr.aria-label]="'Target ' + target().name">
+  <div class="title-row">
+    <h3 class="name mono">{{ target().name }}</h3>
+    <app-status-badge [status]="target().connected ? 'CONNECTED' : 'DISCONNECTED'" />
+    <span class="subtle">
+      @if (target().connected) {
+        connected since {{ ago(target().connectedSince) }}
+      } @else {
+        last seen {{ ago(target().lastSeenAt) }}
+      }
+    </span>
+    <span class="subtle">version {{ target().runnerVersion || none }}</span>
+    @if (target().quarantined) {
+      <app-status-badge status="QUARANTINED" />
+    }
+  </div>
+
+  @if (target().quarantined) {
+    <p class="page-error" role="alert">
+      Quarantined: {{ target().quarantineReason || none }}, since {{ ago(target().quarantinedAt) }}.
+      It takes no new leases until it is greenlit.
+    </p>
+  }
+
+  <section class="slots" aria-label="Slots">
+    <p class="slots-total">{{ usedTotal() }}/{{ target().slotsTotal }} slots used</p>
+    <ul class="slot-types">
+      <li>ci {{ target().used.ci }} (min {{ target().minimums.ci }})</li>
+      <li>workspace {{ target().used.workspace }} (min {{ target().minimums.workspace }})</li>
+      <li>desk {{ target().used.desk }} (min {{ target().minimums.desk }})</li>
+    </ul>
+  </section>
+
+  <section class="login" aria-label="Sign-in">
+    <div class="row">
+      <span class="label">Sign-in</span>
+      <span class="presence">
+        Claude
+        @if (target().login.claude) {
+          <app-status-badge [status]="target().login.claude!" />
+        } @else {
+          <span class="subtle">{{ none }}</span>
+        }
+      </span>
+      <span class="presence">
+        Kimi
+        @if (target().login.kimi) {
+          <app-status-badge [status]="target().login.kimi!" />
+        } @else {
+          <span class="subtle">{{ none }}</span>
+        }
+      </span>
+      <span class="subtle">checked {{ ago(target().login.checkedAt) }}</span>
+      <qits-button
+        variant="ghost"
+        size="sm"
+        [busy]="busy() === 'logincheck'"
+        (pressed)="loginCheck()"
+        >Check sign-in</qits-button
+      >
+    </div>
+    @if (loginCheckRequested()) {
+      <p class="subtle">
+        Asked the target to check its sign-in. Reload the page to see the answer.
+      </p>
+    }
+    @if (target().loginCommand || target().kimiLoginCommand) {
+      <p class="note">Run on the target's node. The platform never sees the secret.</p>
+      @if (target().loginCommand; as command) {
+        <app-copy-text [text]="command" label="Copy Claude login" />
+      }
+      @if (target().kimiLoginCommand; as command) {
+        <app-copy-text [text]="command" label="Copy Kimi login" />
+      }
+    } @else {
+      <p class="subtle">The login command appears once the runner has reported its volume.</p>
+    }
+  </section>
+
+  <section class="health" aria-label="Health check">
+    <div class="row">
+      <span class="label">Last health check</span>
+      @if (target().lastHealthCheckAt) {
+        <app-status-badge [status]="target().lastHealthCheckOk ? 'PASSED' : 'FAILED'" />
+        <span class="subtle">{{ ago(target().lastHealthCheckAt) }}</span>
+      } @else {
+        <span class="subtle">not checked yet</span>
+      }
+      <qits-button
+        variant="ghost"
+        size="sm"
+        [busy]="busy() === 'healthcheck'"
+        (pressed)="runHealthCheck()"
+        >Run health check</qits-button
+      >
+      <qits-button variant="ghost" size="sm" (pressed)="toggleHealth()">{{
+        healthOpen() ? 'Hide details' : 'Details'
+      }}</qits-button>
+    </div>
+    @if (healthCheckRequested()) {
+      <p class="subtle">Health check requested. Reload the page to see the answer.</p>
+    }
+    @if (healthOpen()) {
+      <app-async
+        [state]="healthState()"
+        loadingLabel="Loading the health report"
+        errorLabel="Could not load the health report"
+        (retry)="loadHealth()"
+      />
+      @if (healthState().kind === 'ready') {
+        @if (healthReport(); as report) {
+          <ul class="checks">
+            @for (check of report.checks; track check.name) {
+              <li>
+                <span class="mono">{{ check.name }}</span>
+                <app-status-badge [status]="check.ok ? 'PASSED' : 'FAILED'" />
+                <span class="subtle">{{ check.detail || none }}</span>
+              </li>
+            }
+          </ul>
+        } @else {
+          <app-empty message="No health check has settled yet." />
+        }
+      }
+    }
+  </section>
+
+  <section class="edit" aria-label="Description and minimums">
+    @if (draft(); as d) {
+      <div class="fields">
+        <label class="field">
+          <span>Description</span>
+          <input
+            class="input"
+            type="text"
+            [value]="d.description"
+            (input)="edit({ description: $any($event.target).value })"
+          />
+        </label>
+        <label class="field narrow">
+          <span>Min ci</span>
+          <input
+            class="input"
+            type="number"
+            min="0"
+            [value]="d.ci"
+            (input)="edit({ ci: $any($event.target).valueAsNumber })"
+          />
+        </label>
+        <label class="field narrow">
+          <span>Min workspace</span>
+          <input
+            class="input"
+            type="number"
+            min="0"
+            [value]="d.workspace"
+            (input)="edit({ workspace: $any($event.target).valueAsNumber })"
+          />
+        </label>
+        <label class="field narrow">
+          <span>Min desk</span>
+          <input
+            class="input"
+            type="number"
+            min="0"
+            [value]="d.desk"
+            (input)="edit({ desk: $any($event.target).valueAsNumber })"
+          />
+        </label>
+      </div>
+      <div class="row">
+        <qits-button [busy]="busy() === 'save'" (pressed)="saveEdit()">Save</qits-button>
+        <qits-button variant="ghost" (pressed)="cancelEdit()">Cancel</qits-button>
+      </div>
+    } @else {
+      <p class="description">{{ target().description || none }}</p>
+      <div class="row">
+        <qits-button variant="ghost" size="sm" (pressed)="startEdit()">Edit</qits-button>
+      </div>
+    }
+  </section>
+
+  <section class="actions" aria-label="Actions">
+    <div class="row">
+      <qits-button variant="ghost" size="sm" [busy]="busy() === 'rotate'" (pressed)="rotate()"
+        >Rotate registration token</qits-button
+      >
+      @if (target().quarantined) {
+        <qits-button
+          variant="ghost"
+          size="sm"
+          [busy]="busy() === 'greenlight'"
+          (pressed)="greenlight()"
+          >Greenlight</qits-button
+        >
+      }
+      <qits-button variant="ghost" size="sm" (pressed)="toggleLeases()">{{
+        leasesOpen() ? 'Hide leases' : 'Leases'
+      }}</qits-button>
+      <qits-button
+        [variant]="confirmingDelete() ? 'secondary' : 'ghost'"
+        size="sm"
+        [busy]="busy() === 'delete'"
+        (pressed)="pressDelete()"
+        >{{ confirmingDelete() ? 'Confirm delete?' : 'Delete' }}</qits-button
+      >
+      @if (confirmingDelete()) {
+        <qits-button variant="ghost" size="sm" (pressed)="cancelDelete()">Keep it</qits-button>
+      }
+    </div>
+    @if (rowError(); as message) {
+      <p class="page-error" role="alert">{{ message }}</p>
+    }
+  </section>
+
+  @if (leasesOpen()) {
+    <section class="leases" aria-label="Leases">
+      <app-async
+        [state]="leasesState()"
+        loadingLabel="Loading the leases"
+        errorLabel="Could not load the leases"
+        (retry)="loadLeases()"
+      />
+      @if (leasesState().kind === 'ready') {
+        @if (leases().length === 0) {
+          <app-empty message="This target holds no leases." />
+        } @else {
+          <div class="scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th scope="col">Type</th>
+                  <th scope="col">Owner</th>
+                  <th scope="col">Owner ref</th>
+                  <th scope="col">State</th>
+                  <th scope="col">Detail</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (lease of leases(); track lease.id) {
+                  <tr>
+                    <td>{{ lease.slotType }}</td>
+                    <td>{{ lease.ownerApp }}</td>
+                    <td class="mono">{{ lease.ownerRef }}</td>
+                    <td><app-status-badge [status]="lease.state" /></td>
+                    <td class="value">{{ lease.detail || none }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      }
+    </section>
+  }
+</article>

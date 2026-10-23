@@ -1,0 +1,131 @@
+<header class="head">
+  <h1>Targets</h1>
+</header>
+<p class="lede">
+  The swarms qits-system-runner-daemon holds typed slots on — ci, workspace and desk — each with a
+  total, a minimum per type and its own sign-in.
+</p>
+
+<app-async
+  [state]="state()"
+  loadingLabel="Loading the targets"
+  errorLabel="Could not load the targets"
+  (retry)="load()"
+/>
+
+@if (state().kind === 'ready') {
+  <section class="create" aria-labelledby="create-target">
+    <h2 id="create-target">Declare a target</h2>
+    <div class="fields">
+      <label class="field">
+        <span>Name</span>
+        <input
+          class="input mono"
+          type="text"
+          autocomplete="off"
+          spellcheck="false"
+          placeholder="build-box-1"
+          [value]="name()"
+          (input)="name.set($any($event.target).value)"
+        />
+      </label>
+      <label class="field">
+        <span>Description (optional)</span>
+        <input
+          class="input"
+          type="text"
+          [value]="description()"
+          (input)="description.set($any($event.target).value)"
+        />
+      </label>
+      <label class="field narrow">
+        <span>Min ci</span>
+        <input
+          class="input"
+          type="number"
+          min="0"
+          [value]="minCi()"
+          (input)="minCi.set($any($event.target).valueAsNumber)"
+        />
+      </label>
+      <label class="field narrow">
+        <span>Min workspace</span>
+        <input
+          class="input"
+          type="number"
+          min="0"
+          [value]="minWorkspace()"
+          (input)="minWorkspace.set($any($event.target).valueAsNumber)"
+        />
+      </label>
+      <label class="field narrow">
+        <span>Min desk</span>
+        <input
+          class="input"
+          type="number"
+          min="0"
+          [value]="minDesk()"
+          (input)="minDesk.set($any($event.target).valueAsNumber)"
+        />
+      </label>
+    </div>
+    <div class="row">
+      <qits-button [busy]="creating()" (pressed)="create()">Declare</qits-button>
+      <qits-button variant="ghost" size="sm" (pressed)="toggleInstallScript()">{{
+        installScriptOpen() ? 'Hide install script' : 'View install script'
+      }}</qits-button>
+    </div>
+    @if (createProblem(); as problem) {
+      <p class="page-error" role="alert">{{ problem }}</p>
+    }
+    @if (installScriptOpen()) {
+      <app-async
+        [state]="installScriptState()"
+        loadingLabel="Loading the install script"
+        errorLabel="Could not load the install script"
+        (retry)="loadInstallScript()"
+      />
+      @if (installScriptState().kind === 'ready') {
+        <pre class="script">{{ installScript() }}</pre>
+      }
+    }
+  </section>
+
+  @if (registration(); as shown) {
+    <section class="install" role="alert" aria-label="Install line">
+      <h2>Install line — {{ shown.target.name }}</h2>
+      <p class="note">
+        Paste this into a shell on the node, which needs docker. This is the only time it is shown:
+        the token inside it is single-use, and leaving this page loses it for good — Rotate
+        registration token on the card makes a new one.
+      </p>
+      <app-copy-text [text]="shown.installLine" label="Copy install line" />
+      <p class="note">
+        <code class="mono">QITS_SYSTEM_RUNNER_CREDENTIAL_VOLUME</code>,
+        <code class="mono">_M2_VOLUME</code> and <code class="mono">_PNPM_VOLUME</code> may be added
+        to that line for the platform host, to reuse its existing volumes rather than naming new
+        ones.
+      </p>
+      <div class="row">
+        <qits-button variant="ghost" size="sm" (pressed)="closeRegistration()">Close</qits-button>
+      </div>
+    </section>
+  }
+
+  @if (targets().length === 0) {
+    <app-empty message="No targets are declared yet." />
+  } @else {
+    <ul class="cards">
+      @for (target of targets(); track target.id) {
+        <li>
+          <app-target-card
+            [target]="target"
+            [now]="clock()"
+            (changed)="load()"
+            (registration)="show($event)"
+          />
+        </li>
+      }
+    </ul>
+  }
+}

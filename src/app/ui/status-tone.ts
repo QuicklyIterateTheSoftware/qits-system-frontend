@@ -52,6 +52,21 @@ const TONES: Readonly<Record<string, QitsBadgeTone>> = {
   REJECTED: 'danger',
   ORPHANED: 'danger',
   REMOVE: 'neutral',
+  // A target's connection and quarantine (epic qits-1481). DISCONNECTED already reads `danger`,
+  // above, and means the same thing for a target that holds no live socket as it does for a node
+  // nothing can reach.
+  CONNECTED: 'success',
+  QUARANTINED: 'danger',
+  // A harness's sign-in state (`TargetLogin.claude`/`.kimi`) and a settled health check's verdict.
+  PRESENT: 'success',
+  ABSENT: 'danger',
+  PASSED: 'success',
+  // A lease's state. RUNNING, EXITED and FAILED already carry a container's tones above, and mean
+  // the same thing here.
+  QUEUED: 'warning',
+  GRANTED: 'info',
+  ENDING: 'warning',
+  ENDED: 'neutral',
 };
 
 /**

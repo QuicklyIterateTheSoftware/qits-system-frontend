@@ -56,10 +56,10 @@ describe('SystemNav', () => {
     );
   }
 
-  it('offers five views under two headings', async () => {
+  it('offers six views under two headings', async () => {
     await mountAt('/');
     expect(texts('.heading')).toEqual(['System', 'Swarm']);
-    expect(texts('a')).toEqual(['Overview', 'Nodes', 'Services', 'Configs', 'Secrets']);
+    expect(texts('a')).toEqual(['Overview', 'Targets', 'Nodes', 'Services', 'Configs', 'Secrets']);
   });
 
   it('marks Overview on the base path, and nowhere else', async () => {
@@ -68,6 +68,11 @@ describe('SystemNav', () => {
 
     await mountAt('/swarm/services');
     expect(current()).toBe('Services');
+  });
+
+  it('marks Targets under its own entry, not under Swarm', async () => {
+    await mountAt('/targets');
+    expect(current()).toBe('Targets');
   });
 
   /** A node page and a container tab are reached from Nodes, and read as being under it. */
