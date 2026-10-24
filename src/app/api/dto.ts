@@ -302,11 +302,22 @@ export interface TargetRegistrationDto {
   readonly installLine: string;
 }
 
-/** `POST /targets` — minimums default to 0 where left out. */
+/** `POST /targets` — minimums default to 0 where left out. When `slots` is left out, the install
+ * line's total is `max(reported total, sum of minimums)`; given, it must fit 0..1024 and be no
+ * less than the minimums' sum, or the service answers 400. */
 export interface CreateTargetDto {
   readonly name: string;
   readonly description?: string;
   readonly minimums?: Partial<SlotCountsDto>;
+  readonly slots?: number;
+}
+
+/** `POST /targets/{id}/registration-token` — `RotateTargetRegistrationTokenRequest` on the wire.
+ * Left out (no body at all), rotation behaves as it always has; given, it resets the install
+ * line's total the same way {@link CreateTargetDto.slots} does, even on an already-registered
+ * target — reinstalling with the new token reinstalls the runner under the same target id. */
+export interface RotateTargetRegistrationTokenDto {
+  readonly slots?: number;
 }
 
 /** `PATCH /targets/{id}` — a blank description clears it, an absent one leaves it; an absent

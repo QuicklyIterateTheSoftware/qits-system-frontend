@@ -68,6 +68,18 @@
           (input)="minDesk.set($any($event.target).valueAsNumber)"
         />
       </label>
+      <label class="field narrow">
+        <span>Slots total (optional)</span>
+        <input
+          class="input"
+          type="number"
+          min="0"
+          max="1024"
+          placeholder="default"
+          [value]="slots() ?? ''"
+          (input)="setSlots($any($event.target).valueAsNumber)"
+        />
+      </label>
     </div>
     <div class="row">
       <qits-button [busy]="creating()" (pressed)="create()">Declare</qits-button>
@@ -97,7 +109,9 @@
       <p class="note">
         Paste this into a shell on the node, which needs docker. This is the only time it is shown:
         the token inside it is single-use, and leaving this page loses it for good — Rotate
-        registration token on the card makes a new one.
+        registration token on the card makes a new one. On an already-registered target, rotating
+        gives an install line that reinstalls its runner under the same target id; the old runner's
+        client is decommissioned once the new one registers.
       </p>
       <app-copy-text [text]="shown.installLine" label="Copy install line" />
       <p class="note">
