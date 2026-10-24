@@ -208,9 +208,13 @@ export class SystemApi {
     return firstValueFrom(this.http.patch<TargetDto>(this.targetUrl(id), body));
   }
 
-  /** Decommissions a target. 409 `TARGET_BUSY` while it holds a lease that has not ended. */
-  deleteTarget(id: string): Promise<void> {
-    return firstValueFrom(this.http.delete<void>(this.targetUrl(id)));
+  /**
+   * Decommissions a target. 409 `TARGET_BUSY` while it holds a lease that has not ended. The 204's
+   * empty body is discarded — `HttpClient` hands it over as `null` — so this resolves `undefined`,
+   * as qits-projects-frontend's `ProjectsApi.deleteWork` does.
+   */
+  async deleteTarget(id: string): Promise<void> {
+    await firstValueFrom(this.http.delete<unknown>(this.targetUrl(id)));
   }
 
   /** Replaces a target's registration token; answers a new one-time install line. */
