@@ -90,6 +90,13 @@ describe('TargetsPage', () => {
     return fieldIn(section, placeholderOrLabel);
   }
 
+  /** A target card's own action field — the rotate action's slots input, scoped away from the
+   * create form's field of the same label above it. */
+  function fieldInCard(element: HTMLElement, placeholderOrLabel: string): HTMLInputElement {
+    const section = element.querySelector('app-target-card .actions') as HTMLElement;
+    return fieldIn(section, placeholderOrLabel);
+  }
+
   function fieldIn(section: HTMLElement, placeholderOrLabel: string): HTMLInputElement {
     const byPlaceholder = section.querySelector<HTMLInputElement>(
       `input[placeholder="${placeholderOrLabel}"]`,
@@ -198,6 +205,35 @@ describe('TargetsPage', () => {
     button(page, 'Close')?.click();
     await settle();
     expect(text(page)).not.toContain('Install line');
+  });
+
+  it('declares a target with a slots total, sending it alongside the minimums', async () => {
+    const page = await open();
+    http.expectOne(TARGETS_URL).flush([]);
+    await settle();
+
+    setValue(createField(page, 'build-box-1'), 'build-box-3');
+    setValue(createField(page, 'Slots total (optional)'), '8');
+    await settle();
+
+    button(page, 'Declare')?.click();
+    const create = http.expectOne(TARGETS_URL);
+    expect(create.request.body).toEqual({
+      name: 'build-box-3',
+      minimums: { ci: 0, workspace: 0, desk: 0 },
+      slots: 8,
+    });
+    create.flush({
+      target: { ...TARGET, id: 't3', name: 'build-box-3', slotsTotal: 8 },
+      registrationToken: 'tok-secret',
+      installLine: 'curl -fsSL https://system.qits.wohlben.eu/system/api/targets/install.sh | sh',
+    });
+    await settle();
+
+    http.expectOne(TARGETS_URL).flush([TARGET, { ...TARGET, id: 't3', name: 'build-box-3' }]);
+    await settle();
+
+    expect(text(page)).toContain('Install line — build-box-3');
   });
 
   it('says why a declare was refused, in the service’s words', async () => {
@@ -330,12 +366,13 @@ describe('TargetsPage', () => {
     expect(text(page)).toContain('No targets are declared yet');
   });
 
-  it('rotates the registration token and shows the new install line', async () => {
+  it('rotates the registration token with no body, and shows the new install line', async () => {
     const page = await openWithOneTarget();
 
     button(page, 'Rotate registration token')?.click();
     const rotate = http.expectOne(`${TARGETS_URL}/t1/registration-token`);
     expect(rotate.request.method).toBe('POST');
+    expect(rotate.request.body).toBeNull();
     rotate.flush({
       target: TARGET,
       registrationToken: 'tok-new',
@@ -348,6 +385,42 @@ describe('TargetsPage', () => {
 
     expect(text(page)).toContain('Install line — build-box-1');
     expect(text(page)).toContain('curl -fsSL');
+  });
+
+  it('rotates with a slots total, sending it as the request body', async () => {
+    const page = await openWithOneTarget();
+
+    const slotsField = fieldInCard(page, 'Slots (optional)');
+    setValue(slotsField, '4');
+    await settle();
+
+    button(page, 'Rotate registration token')?.click();
+    const rotate = http.expectOne(`${TARGETS_URL}/t1/registration-token`);
+    expect(rotate.request.body).toEqual({ slots: 4 });
+    rotate.flush({
+      target: { ...TARGET, slotsTotal: 4 },
+      registrationToken: 'tok-new',
+      installLine: 'curl -fsSL https://system.qits.wohlben.eu/system/api/targets/install.sh | sh',
+    });
+    await settle();
+
+    http.expectOne(TARGETS_URL).flush([{ ...TARGET, slotsTotal: 4 }]);
+    await settle();
+
+    expect(text(page)).toContain('Install line — build-box-1');
+  });
+
+  it('refuses a rotate slots total outside 0..1024 before asking the service', async () => {
+    const page = await openWithOneTarget();
+
+    const slotsField = fieldInCard(page, 'Slots (optional)');
+    setValue(slotsField, '2000');
+    await settle();
+
+    button(page, 'Rotate registration token')?.click();
+    await settle();
+
+    expect(text(page)).toContain('Slots total must be a whole number from 0 to 1024');
   });
 
   it('greenlights a quarantined target', async () => {

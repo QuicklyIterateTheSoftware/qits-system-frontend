@@ -76,6 +76,10 @@ export class TargetCard {
   protected readonly loginCheckRequested = signal(false);
   protected readonly healthCheckRequested = signal(false);
 
+  /** The rotate action's optional slots total. `null` means left blank — the service keeps
+   * `max(reported total, sum of minimums)`. */
+  protected readonly rotateSlots = signal<number | null>(null);
+
   protected readonly leasesOpen = signal(false);
   protected readonly leasesState = signal<Loadable<readonly LeaseDto[]>>(IDLE);
   protected readonly leases = computed(() => {
@@ -149,14 +153,28 @@ export class TargetCard {
 
   // --- actions -------------------------------------------------------------------------------------
 
+  /** Mirrors `targets-page.ts`'s `setSlots`: `valueAsNumber` answers `NaN` for an emptied field,
+   * which reads as "left blank" rather than as a number to send. */
+  protected setRotateSlots(value: number): void {
+    this.rotateSlots.set(Number.isNaN(value) ? null : value);
+  }
+
   protected async rotate(): Promise<void> {
     if (this.busy()) {
+      return;
+    }
+    const slots = this.rotateSlots();
+    if (slots !== null && (!Number.isInteger(slots) || slots < 0 || slots > 1024)) {
+      this.rowError.set('Slots total must be a whole number from 0 to 1024.');
       return;
     }
     this.busy.set('rotate');
     this.rowError.set(null);
     try {
-      const registration = await this.api.rotateTargetRegistrationToken(this.target().id);
+      const registration = await this.api.rotateTargetRegistrationToken(
+        this.target().id,
+        slots ?? undefined,
+      );
       this.registration.emit(registration);
       this.changed.emit();
     } catch (error) {

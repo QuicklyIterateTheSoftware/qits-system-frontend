@@ -48,6 +48,8 @@ export class TargetsPage {
   protected readonly minCi = signal(0);
   protected readonly minWorkspace = signal(0);
   protected readonly minDesk = signal(0);
+  /** `null` means left blank — the service picks `max(reported total, sum of minimums)`. */
+  protected readonly slots = signal<number | null>(null);
   protected readonly creating = signal(false);
   protected readonly createProblem = signal('');
 
@@ -70,6 +72,12 @@ export class TargetsPage {
     return loadInto(this.state, () => this.api.targets());
   }
 
+  /** Mirrors `target-card.ts`'s `setRotateSlots`: `valueAsNumber` answers `NaN` for an emptied
+   * field, which reads as "left blank" rather than as a number to send. */
+  protected setSlots(value: number): void {
+    this.slots.set(Number.isNaN(value) ? null : value);
+  }
+
   protected async create(): Promise<void> {
     if (this.creating()) {
       return;
@@ -79,6 +87,11 @@ export class TargetsPage {
       this.createProblem.set('A target needs a name.');
       return;
     }
+    const slots = this.slots();
+    if (slots !== null && (!Number.isInteger(slots) || slots < 0 || slots > 1024)) {
+      this.createProblem.set('Slots total must be a whole number from 0 to 1024.');
+      return;
+    }
     this.creating.set(true);
     this.createProblem.set('');
     const description = this.description().trim();
@@ -86,6 +99,7 @@ export class TargetsPage {
       name,
       ...(description ? { description } : {}),
       minimums: { ci: this.minCi(), workspace: this.minWorkspace(), desk: this.minDesk() },
+      ...(slots !== null ? { slots } : {}),
     };
     try {
       const created = await this.api.createTarget(body);
@@ -95,6 +109,7 @@ export class TargetsPage {
       this.minCi.set(0);
       this.minWorkspace.set(0);
       this.minDesk.set(0);
+      this.slots.set(null);
       await this.load();
     } catch (error) {
       this.createProblem.set(describeError(error));

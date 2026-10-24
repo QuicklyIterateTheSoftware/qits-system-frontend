@@ -18,6 +18,7 @@ import {
   type NodeSummaryDto,
   type OverviewDto,
   type PatchTargetDto,
+  type RotateTargetRegistrationTokenDto,
   type SecretSummaryDto,
   type ServiceDetailDto,
   type ServiceSummaryDto,
@@ -217,10 +218,19 @@ export class SystemApi {
     await firstValueFrom(this.http.delete<unknown>(this.targetUrl(id)));
   }
 
-  /** Replaces a target's registration token; answers a new one-time install line. */
-  rotateTargetRegistrationToken(id: string): Promise<TargetRegistrationDto> {
+  /**
+   * Replaces a target's registration token; answers a new one-time install line. Works on a
+   * registered target too: pasting the new line reinstalls its runner under the same target id,
+   * and the old runner's client is decommissioned once the new one registers.
+   *
+   * `slots` resets the install line's `QITS_SYSTEM_RUNNER_SLOTS` the way {@link createTarget}'s
+   * does. Left undefined, no body is sent at all — byte-identical to a plain rotate — so a caller
+   * that never passes it keeps today's request exactly.
+   */
+  rotateTargetRegistrationToken(id: string, slots?: number): Promise<TargetRegistrationDto> {
+    const body: RotateTargetRegistrationTokenDto | null = slots === undefined ? null : { slots };
     return firstValueFrom(
-      this.http.post<TargetRegistrationDto>(`${this.targetUrl(id)}/registration-token`, {}),
+      this.http.post<TargetRegistrationDto>(`${this.targetUrl(id)}/registration-token`, body),
     );
   }
 
