@@ -325,14 +325,24 @@ describe('qits-system-frontend → qits-system-service pact: SystemApi (targets)
   );
 
   it.skipIf(!recorded(NO_TARGET, 'getTargetInstallScript'))(
-    'view-install-script: getTargetInstallScript answers a plain-text script',
+    'view-install-script: getTargetInstallScript answers text/plain',
     () =>
-      given(NO_TARGET, 'getTargetInstallScript', 'view-install-script', []).executeTest(
-        async (server) => {
-          const script = await apiAt(server.url).targetInstallScript();
-          expect(script.length).toBeGreaterThan(0);
-        },
-      ),
+      addGoldenInteraction(pact, masters!, {
+        provider: PROVIDER,
+        state: NO_TARGET,
+        operationId: 'getTargetInstallScript',
+        trigger: { kind: 'ui', app: CONSUMER, interaction: 'view-install-script' },
+        consumes: [],
+        // Not JSON, so the harness's `response` (as qits-ui-components' RAW_FILE block does for
+        // qits-githost's `getRaw`): the pact binds the status and `Content-Type: text/plain`, which
+        // is what `responseType: 'text'` needs. No example body: pact-jvm's verifier checks a body's
+        // media type by sniffing the provider's real bytes, and a `#!/bin/sh` script sniffs as
+        // `application/x-sh` whatever its header says, so a `text/plain` body could never verify.
+        response: { contentType: 'text/plain' },
+      }).executeTest(async (server) => {
+        // The mock answers the bound header and no bytes; the client hands the text back as is.
+        await expect(apiAt(server.url).targetInstallScript()).resolves.toBe('');
+      }),
   );
 
   it.skipIf(!recorded(QUEUED_LEASE, 'listLeases'))(
