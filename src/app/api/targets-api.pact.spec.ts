@@ -12,7 +12,12 @@ import {
 } from '@qits/angular/testing';
 import { QITS_API_BASE } from './api-base';
 import { errorCode, SystemApi } from './system-api';
-import type { CreateTargetDto, PatchTargetDto } from './dto';
+import type {
+  CreateTargetDto,
+  PatchTargetDto,
+  StartTargetSignInDto,
+  TargetSignInCodeDto,
+} from './dto';
 
 /**
  * `SystemApi`'s pact with qits-system-service's targets doors (epic qits-1481), in the same shape
@@ -31,6 +36,11 @@ import type { CreateTargetDto, PatchTargetDto } from './dto';
  * note for `registerTarget`, on the same branch. Once a release publishes them, bump this
  * devDependency and every `it.skipIf` below starts running on its own — no other edit is needed,
  * because every path and field name here was read from those already-committed fixtures.
+ *
+ * The four sign-in rows (qits-1593) follow the same rule: `a connected target` and `a connected
+ * target with a claude sign-in awaiting its code` are recorded on `qits-system-service`'s
+ * `ticket/qits-1593` branch and skip here until a release publishes them and the devDependency is
+ * bumped.
  */
 const CONSUMER = 'qits-system-frontend';
 const PROVIDER = 'qits-system-service';
@@ -48,12 +58,18 @@ const OPERATIONS = [
   'getTargetHealth',
   'getTargetInstallScript',
   'listLeases',
+  'startTargetSignIn',
+  'getTargetSignIn',
+  'submitTargetSignInCode',
+  'cancelTargetSignIn',
 ];
 
 const DECLARED_TARGET = 'a declared target';
 const NO_TARGET = 'no target';
 const UNREGISTERED_RUNNER = 'an unregistered runner';
 const QUEUED_LEASE = 'a queued lease';
+const CONNECTED_TARGET = 'a connected target';
+const AWAITING_CODE = 'a connected target with a claude sign-in awaiting its code';
 
 /** `null` while the published package predates the targets module (see the file comment). */
 const masters: GoldenMasters | null = (() => {
@@ -367,6 +383,101 @@ describe('qits-system-frontend → qits-system-service pact: SystemApi (targets)
         const body = (await response.json()) as readonly { ownerApp: string }[];
         expect(body.length).toBeGreaterThan(0);
         expect(body[0].ownerApp).toBeTruthy();
+      }),
+  );
+
+  it.skipIf(!recorded(CONNECTED_TARGET, 'startTargetSignIn'))(
+    'start-sign-in: startTargetSignIn answers the sign-in, STARTING',
+    () => {
+      const body = sent(CONNECTED_TARGET, 'startTargetSignIn') as StartTargetSignInDto;
+      return given(CONNECTED_TARGET, 'startTargetSignIn', 'start-sign-in', [
+        'signInId',
+        'targetId',
+        'harness',
+        'state',
+        'url',
+        'userCode',
+        'detail',
+        'startedAt',
+        'updatedAt',
+      ]).executeTest(async (server) => {
+        const started = await apiAt(server.url).startTargetSignIn(
+          param(CONNECTED_TARGET, 'startTargetSignIn', 'targetId'),
+          body.harness,
+        );
+        expect(started.harness).toBe(body.harness);
+        expect(started.signInId).toBeTruthy();
+      });
+    },
+  );
+
+  it.skipIf(!recorded(AWAITING_CODE, 'getTargetSignIn'))(
+    'poll-sign-in: getTargetSignIn answers the state, url and code the card draws',
+    () =>
+      given(AWAITING_CODE, 'getTargetSignIn', 'poll-sign-in', [
+        'signInId',
+        'targetId',
+        'harness',
+        'state',
+        'url',
+        'userCode',
+        'detail',
+        'startedAt',
+        'updatedAt',
+      ]).executeTest(async (server) => {
+        const read = await apiAt(server.url).targetSignIn(
+          param(AWAITING_CODE, 'getTargetSignIn', 'targetId'),
+          param(AWAITING_CODE, 'getTargetSignIn', 'signInId'),
+        );
+        expect(read.state).toBe('AWAITING_CODE');
+        expect(read.url).toBeTruthy();
+      }),
+  );
+
+  it.skipIf(!recorded(AWAITING_CODE, 'submitTargetSignInCode'))(
+    'submit-sign-in-code: submitTargetSignInCode sends exactly the code',
+    () => {
+      const body = sent(AWAITING_CODE, 'submitTargetSignInCode') as TargetSignInCodeDto;
+      return given(AWAITING_CODE, 'submitTargetSignInCode', 'submit-sign-in-code', [
+        'signInId',
+        'targetId',
+        'harness',
+        'state',
+        'url',
+        'userCode',
+        'detail',
+        'startedAt',
+        'updatedAt',
+      ]).executeTest(async (server) => {
+        const submitted = await apiAt(server.url).submitTargetSignInCode(
+          param(AWAITING_CODE, 'submitTargetSignInCode', 'targetId'),
+          param(AWAITING_CODE, 'submitTargetSignInCode', 'signInId'),
+          body.code,
+        );
+        expect(submitted.state).toBeTruthy();
+      });
+    },
+  );
+
+  it.skipIf(!recorded(AWAITING_CODE, 'cancelTargetSignIn'))(
+    'cancel-sign-in: cancelTargetSignIn answers the sign-in, CANCELLED',
+    () =>
+      given(AWAITING_CODE, 'cancelTargetSignIn', 'cancel-sign-in', [
+        'signInId',
+        'targetId',
+        'harness',
+        'state',
+        'url',
+        'userCode',
+        'detail',
+        'startedAt',
+        'updatedAt',
+      ]).executeTest(async (server) => {
+        const cancelled = await apiAt(server.url).cancelTargetSignIn(
+          param(AWAITING_CODE, 'cancelTargetSignIn', 'targetId'),
+          param(AWAITING_CODE, 'cancelTargetSignIn', 'signInId'),
+        );
+        expect(cancelled.state).toBe('CANCELLED');
       }),
   );
 });

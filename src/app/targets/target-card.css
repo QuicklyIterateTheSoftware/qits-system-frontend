@@ -143,3 +143,32 @@
   min-width: 0;
   width: 100%;
 }
+
+.sign-in {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.4rem 0.6rem;
+  border-left: 3px solid #e5e7eb;
+}
+
+.link {
+  font-size: 0.85rem;
+}
+
+.user-code {
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+.manual summary {
+  cursor: pointer;
+  color: #374151;
+  font-size: 0.85rem;
+}
+
+.manual[open] {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}

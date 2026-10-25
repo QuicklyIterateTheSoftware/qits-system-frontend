@@ -349,6 +349,49 @@ export interface TargetHealthReportDto {
   readonly checks: readonly TargetHealthCheckDto[];
 }
 
+/** A harness a target signs in to: the two `TargetLoginDto` carries a state for. */
+export type SignInHarness = 'claude' | 'kimi';
+
+/** `STARTING`, `AWAITING_CODE` (claude: open `url`, post the code the browser shows),
+ * `AWAITING_BROWSER` (kimi: open `url`, approve `userCode`), then one of the terminal four —
+ * `SUCCEEDED`, `FAILED`, `EXPIRED`, `CANCELLED`. Plain on the wire, like every other enum here. */
+export type SignInState = string;
+
+/** The states a sign-in never leaves; {@link TargetSignInDto} stops moving once it reaches one. */
+export const TERMINAL_SIGN_IN_STATES: readonly SignInState[] = [
+  'SUCCEEDED',
+  'FAILED',
+  'EXPIRED',
+  'CANCELLED',
+];
+
+/**
+ * `POST /targets/{id}/sign-ins` and the reads and writes on one (qits-1593): the runner on the
+ * target runs the harness's own login in its credential volume and relays what it prints. Held in
+ * the service's memory only, it expires after 10 minutes and is readable ~15 minutes after settling.
+ */
+export interface TargetSignInDto {
+  readonly signInId: string;
+  readonly targetId: string;
+  readonly harness: SignInHarness;
+  readonly state: SignInState;
+  readonly url: string | null;
+  readonly userCode: string | null;
+  readonly detail: string | null;
+  readonly startedAt: string;
+  readonly updatedAt: string;
+}
+
+/** `POST /targets/{id}/sign-ins` — `StartSignInRequest` on the wire. */
+export interface StartTargetSignInDto {
+  readonly harness: SignInHarness;
+}
+
+/** `POST /targets/{id}/sign-ins/{signInId}/code` — `SignInCodeRequest` on the wire. */
+export interface TargetSignInCodeDto {
+  readonly code: string;
+}
+
 /** `CI`, `WORKSPACE` or `DESK` — a plain string on the wire, like every other enum here. */
 export type SlotType = string;
 
@@ -383,3 +426,7 @@ export const MINIMUMS_EXCEED_TOTAL = 'MINIMUMS_EXCEED_TOTAL';
 
 /** `DELETE /targets/{id}`, 409: it still holds a lease that has not ended. */
 export const TARGET_BUSY = 'TARGET_BUSY';
+
+/** `POST /targets/{id}/sign-ins`, 409: a sign-in for that harness has not settled; the message
+ * names its `signInId`. */
+export const SIGN_IN_RUNNING = 'SIGN_IN_RUNNING';

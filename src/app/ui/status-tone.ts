@@ -61,6 +61,12 @@ const TONES: Readonly<Record<string, QitsBadgeTone>> = {
   PRESENT: 'success',
   ABSENT: 'danger',
   PASSED: 'success',
+  // A target sign-in's state (qits-1593). STARTING and FAILED already carry a task's tones above.
+  AWAITING_CODE: 'info',
+  AWAITING_BROWSER: 'info',
+  SUCCEEDED: 'success',
+  EXPIRED: 'warning',
+  CANCELLED: 'neutral',
   // A lease's state. RUNNING, EXITED and FAILED already carry a container's tones above, and mean
   // the same thing here.
   QUEUED: 'warning',

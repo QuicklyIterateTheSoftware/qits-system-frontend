@@ -20,11 +20,15 @@ import {
   type PatchTargetDto,
   type RotateTargetRegistrationTokenDto,
   type SecretSummaryDto,
+  type SignInHarness,
+  type StartTargetSignInDto,
   type ServiceDetailDto,
   type ServiceSummaryDto,
   type TargetDto,
   type TargetHealthReportDto,
   type TargetRegistrationDto,
+  type TargetSignInCodeDto,
+  type TargetSignInDto,
   type TerminalDto,
   type TerminalShell,
   type VolumeSummaryDto,
@@ -278,6 +282,36 @@ export class SystemApi {
     );
   }
 
+  /**
+   * Signs a connected target in to `harness` (qits-1593): its runner runs the harness's own login
+   * and relays the URL and code it prints. Answers 202 with the sign-in, `STARTING`; poll
+   * {@link targetSignIn} from there. 409 `TARGET_UNAVAILABLE` when the target is not connected,
+   * 409 `SIGN_IN_RUNNING` while one for that harness has not settled.
+   */
+  startTargetSignIn(id: string, harness: SignInHarness): Promise<TargetSignInDto> {
+    const body: StartTargetSignInDto = { harness };
+    return firstValueFrom(this.http.post<TargetSignInDto>(`${this.targetUrl(id)}/sign-ins`, body));
+  }
+
+  /** One sign-in, while it runs and ~15 minutes after it settles. 404 `SIGN_IN_NOT_FOUND` after. */
+  targetSignIn(id: string, signInId: string): Promise<TargetSignInDto> {
+    return firstValueFrom(this.http.get<TargetSignInDto>(this.signInUrl(id, signInId)));
+  }
+
+  /** Hands an `AWAITING_CODE` sign-in the code the browser showed. 409
+   * `SIGN_IN_NOT_AWAITING_CODE` in any other state. */
+  submitTargetSignInCode(id: string, signInId: string, code: string): Promise<TargetSignInDto> {
+    const body: TargetSignInCodeDto = { code };
+    return firstValueFrom(
+      this.http.post<TargetSignInDto>(`${this.signInUrl(id, signInId)}/code`, body),
+    );
+  }
+
+  /** Stops a sign-in; answers it `CANCELLED`, or as it settled when it already had. */
+  cancelTargetSignIn(id: string, signInId: string): Promise<TargetSignInDto> {
+    return firstValueFrom(this.http.delete<TargetSignInDto>(this.signInUrl(id, signInId)));
+  }
+
   /** The leases of one target — type, owner, state and detail. */
   targetLeases(targetId: string): Promise<readonly LeaseDto[]> {
     return firstValueFrom(
@@ -289,6 +323,10 @@ export class SystemApi {
 
   private targetUrl(id: string): string {
     return `${this.base}/system/api/targets/${encodeURIComponent(id)}`;
+  }
+
+  private signInUrl(id: string, signInId: string): string {
+    return `${this.targetUrl(id)}/sign-ins/${encodeURIComponent(signInId)}`;
   }
 
   private swarmUrl(kind: string, id: string): string {

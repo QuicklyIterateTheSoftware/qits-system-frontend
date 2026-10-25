@@ -34,22 +34,25 @@
   <section class="login" aria-label="Sign-in">
     <div class="row">
       <span class="label">Sign-in</span>
-      <span class="presence">
-        Claude
-        @if (target().login.claude) {
-          <app-status-badge [status]="target().login.claude!" />
-        } @else {
-          <span class="subtle">{{ none }}</span>
-        }
-      </span>
-      <span class="presence">
-        Kimi
-        @if (target().login.kimi) {
-          <app-status-badge [status]="target().login.kimi!" />
-        } @else {
-          <span class="subtle">{{ none }}</span>
-        }
-      </span>
+      @for (h of harnesses; track h.harness) {
+        <span class="presence">
+          {{ h.label }}
+          @if (target().login[h.harness]; as state) {
+            <app-status-badge [status]="state" />
+          } @else {
+            <span class="subtle">{{ none }}</span>
+          }
+          @if (canSignIn(h.harness)) {
+            <qits-button
+              variant="ghost"
+              size="sm"
+              [busy]="signIns()[h.harness].busy === 'start'"
+              (pressed)="startSignIn(h.harness)"
+              >Sign in to {{ h.label }}</qits-button
+            >
+          }
+        </span>
+      }
       <span class="subtle">checked {{ ago(target().login.checkedAt) }}</span>
       <qits-button
         variant="ghost"
@@ -64,17 +67,94 @@
         Asked the target to check its sign-in. Reload the page to see the answer.
       </p>
     }
-    @if (target().loginCommand || target().kimiLoginCommand) {
-      <p class="note">Run on the target's node. The platform never sees the secret.</p>
-      @if (target().loginCommand; as command) {
-        <app-copy-text [text]="command" label="Copy Claude login" />
+    @for (h of harnesses; track h.harness) {
+      @let flow = signIns()[h.harness];
+      @if (flow.view || flow.error) {
+        <div class="sign-in" [attr.aria-label]="h.label + ' sign-in'">
+          @if (flow.view; as view) {
+            <div class="row">
+              <span class="label">{{ h.label }} sign-in</span>
+              <app-status-badge [status]="view.state" />
+              @if (view.url && !isTerminal(view)) {
+                <a class="link" [href]="view.url" target="_blank" rel="noopener noreferrer"
+                  >Open the {{ h.label }} sign-in page</a
+                >
+              }
+              @if (!isTerminal(view)) {
+                <qits-button
+                  variant="ghost"
+                  size="sm"
+                  [busy]="flow.busy === 'cancel'"
+                  (pressed)="cancelSignIn(h.harness)"
+                  >Cancel sign-in</qits-button
+                >
+              }
+            </div>
+            @if (view.state === 'STARTING') {
+              <p class="subtle">The target is starting the {{ h.label }} login…</p>
+            }
+            @if (view.state === 'AWAITING_BROWSER' && view.userCode) {
+              <p class="note">
+                Approve the code <code class="mono user-code">{{ view.userCode }}</code> on the
+                sign-in page.
+              </p>
+            }
+            @if (view.state === 'AWAITING_CODE') {
+              <div class="row">
+                <label class="field">
+                  <span>Code from the browser</span>
+                  <input
+                    class="input mono"
+                    type="text"
+                    autocomplete="off"
+                    spellcheck="false"
+                    [value]="flow.code"
+                    [disabled]="flow.codeSentIn !== null"
+                    (input)="setCode(h.harness, $any($event.target).value)"
+                  />
+                </label>
+                <qits-button
+                  size="sm"
+                  [busy]="flow.busy === 'code'"
+                  [disabled]="flow.codeSentIn !== null || !flow.code.trim()"
+                  (pressed)="submitCode(h.harness)"
+                  >Submit code</qits-button
+                >
+              </div>
+              @if (flow.codeSentIn !== null) {
+                <p class="subtle">Code handed over — waiting for the target to take it.</p>
+              }
+            }
+            @if (view.state === 'SUCCEEDED') {
+              <p class="subtle">Signed in. The badge turns PRESENT once the target re-checks.</p>
+            }
+            @if (isTerminal(view) && view.state !== 'SUCCEEDED') {
+              <p class="page-error" role="alert">
+                {{ h.label }} sign-in {{ view.state.toLowerCase()
+                }}{{ view.detail ? ': ' + view.detail : '' }}.
+              </p>
+            }
+          }
+          @if (flow.error; as message) {
+            <p class="page-error" role="alert">{{ message }}</p>
+          }
+        </div>
       }
-      @if (target().kimiLoginCommand; as command) {
-        <app-copy-text [text]="command" label="Copy Kimi login" />
-      }
-    } @else {
-      <p class="subtle">The login command appears once the runner has reported its volume.</p>
     }
+    <details class="manual">
+      <summary>Manual sign-in</summary>
+      @if (target().loginCommand || target().kimiLoginCommand) {
+        <p class="note">Run on the target's node. The platform never sees the secret.</p>
+        @if (target().loginCommand; as command) {
+          <app-copy-text [text]="command" label="Copy Claude login" />
+        }
+        @if (target().kimiLoginCommand; as command) {
+          <app-copy-text [text]="command" label="Copy Kimi login" />
+        }
+      } @else {
+        <p class="subtle">The login command appears once the runner has reported its volume.</p>
+      }
+    </details>
   </section>
 
   <section class="health" aria-label="Health check">
