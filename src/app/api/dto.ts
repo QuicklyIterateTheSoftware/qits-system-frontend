@@ -251,7 +251,7 @@ export interface ErrorDto {
  */
 
 /** Slots per type. Always filled on a read — `TargetViews.SlotCounts.of` defaults every member to
- * `0` — so a target's `minimums` and `used` are never partial; only a write may omit a member. */
+ * `0` — so a target's `reservations` and `used` are never partial; only a write may omit a member. */
 export interface SlotCountsDto {
   readonly ci: number;
   readonly workspace: number;
@@ -272,7 +272,11 @@ export interface TargetDto {
   readonly name: string;
   readonly description: string | null;
   readonly slotsTotal: number;
-  readonly minimums: SlotCountsDto;
+  /** Slots reserved per type. Not a limit: a type may use more while shared slots are free.
+   * Absent from a qits-system older than qits-1682; read it through {@link reservationsOf}. */
+  readonly reservations?: SlotCountsDto;
+  /** @deprecated The old name of `reservations`, same values (qits-1682). */
+  readonly minimums?: SlotCountsDto;
   readonly used: SlotCountsDto;
   readonly login: TargetLoginDto;
   readonly credentialVolume: string | null;
@@ -302,12 +306,15 @@ export interface TargetRegistrationDto {
   readonly installLine: string;
 }
 
-/** `POST /targets` — minimums default to 0 where left out. When `slots` is left out, the install
- * line's total is `max(reported total, sum of minimums)`; given, it must fit 0..1024 and be no
- * less than the minimums' sum, or the service answers 400. */
+/** `POST /targets` — reservations default to 0 where left out. When `slots` is left out, the
+ * install line's total is `max(reported total, sum of reservations)`; given, it must fit 0..1024
+ * and be no less than the reservations' sum, or the service answers 400. */
 export interface CreateTargetDto {
   readonly name: string;
   readonly description?: string;
+  readonly reservations?: Partial<SlotCountsDto>;
+  /** @deprecated The old name of `reservations`; send both until every qits-system reads the new
+   * one (qits-1682). */
   readonly minimums?: Partial<SlotCountsDto>;
   readonly slots?: number;
 }
@@ -321,10 +328,26 @@ export interface RotateTargetRegistrationTokenDto {
 }
 
 /** `PATCH /targets/{id}` — a blank description clears it, an absent one leaves it; an absent
- * minimums member leaves its own value. */
+ * reservations member leaves its own value. */
 export interface PatchTargetDto {
   readonly description?: string | null;
+  readonly reservations?: Partial<SlotCountsDto>;
+  /** @deprecated The old name of `reservations`; send both until every qits-system reads the new
+   * one (qits-1682). */
   readonly minimums?: Partial<SlotCountsDto>;
+}
+
+/** A target's reservations: `reservations`, else the deprecated `minimums` an older qits-system
+ * answers (qits-1682). */
+export function reservationsOf(target: TargetDto): SlotCountsDto {
+  return target.reservations ?? target.minimums ?? { ci: 0, workspace: 0, desk: 0 };
+}
+
+/** The same reservations under the new name and the deprecated one, for a write (qits-1682). */
+export function withReservations(
+  reservations: Partial<SlotCountsDto>,
+): Pick<PatchTargetDto, 'reservations' | 'minimums'> {
+  return { reservations, minimums: reservations };
 }
 
 /** `POST /targets/{id}/healthcheck`, 202: the request this ask was given, settled later. */
@@ -421,7 +444,10 @@ export interface LeaseDto {
   readonly endedAt: string | null;
 }
 
-/** `PATCH /targets/{id}`, 409: the minimums' sum is above the total the runner reported. */
+/** `PATCH /targets/{id}`, 409: the reservations' sum is above the total the runner reported. */
+export const RESERVATIONS_EXCEED_TOTAL = 'RESERVATIONS_EXCEED_TOTAL';
+
+/** @deprecated {@link RESERVATIONS_EXCEED_TOTAL} as a qits-system older than qits-1682 names it. */
 export const MINIMUMS_EXCEED_TOTAL = 'MINIMUMS_EXCEED_TOTAL';
 
 /** `DELETE /targets/{id}`, 409: it still holds a lease that has not ended. */

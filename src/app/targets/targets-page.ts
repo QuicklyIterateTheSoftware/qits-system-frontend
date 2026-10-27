@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { QitsButton } from '@qits/ui-components';
 import { SystemApi } from '../api/system-api';
+import { withReservations } from '../api/dto';
 import type { CreateTargetDto, TargetDto, TargetRegistrationDto } from '../api/dto';
 import { Async } from '../ui/async';
 import { CopyText } from '../ui/copy-text';
@@ -45,10 +46,10 @@ export class TargetsPage {
 
   protected readonly name = signal('');
   protected readonly description = signal('');
-  protected readonly minCi = signal(0);
-  protected readonly minWorkspace = signal(0);
-  protected readonly minDesk = signal(0);
-  /** `null` means left blank — the service picks `max(reported total, sum of minimums)`. */
+  protected readonly reservedCi = signal(0);
+  protected readonly reservedWorkspace = signal(0);
+  protected readonly reservedDesk = signal(0);
+  /** `null` means left blank — the service picks `max(reported total, sum of reservations)`. */
   protected readonly slots = signal<number | null>(null);
   protected readonly creating = signal(false);
   protected readonly createProblem = signal('');
@@ -98,7 +99,11 @@ export class TargetsPage {
     const body: CreateTargetDto = {
       name,
       ...(description ? { description } : {}),
-      minimums: { ci: this.minCi(), workspace: this.minWorkspace(), desk: this.minDesk() },
+      ...withReservations({
+        ci: this.reservedCi(),
+        workspace: this.reservedWorkspace(),
+        desk: this.reservedDesk(),
+      }),
       ...(slots !== null ? { slots } : {}),
     };
     try {
@@ -106,9 +111,9 @@ export class TargetsPage {
       this.registration.set(created);
       this.name.set('');
       this.description.set('');
-      this.minCi.set(0);
-      this.minWorkspace.set(0);
-      this.minDesk.set(0);
+      this.reservedCi.set(0);
+      this.reservedWorkspace.set(0);
+      this.reservedDesk.set(0);
       this.slots.set(null);
       await this.load();
     } catch (error) {

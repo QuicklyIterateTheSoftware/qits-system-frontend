@@ -25,9 +25,9 @@
   <section class="slots" aria-label="Slots">
     <p class="slots-total">{{ usedTotal() }}/{{ target().slotsTotal }} slots used</p>
     <ul class="slot-types">
-      <li>ci {{ target().used.ci }} (min {{ target().minimums.ci }})</li>
-      <li>workspace {{ target().used.workspace }} (min {{ target().minimums.workspace }})</li>
-      <li>desk {{ target().used.desk }} (min {{ target().minimums.desk }})</li>
+      <li>ci {{ target().used.ci }} used, {{ reserved().ci }} reserved</li>
+      <li>workspace {{ target().used.workspace }} used, {{ reserved().workspace }} reserved</li>
+      <li>desk {{ target().used.desk }} used, {{ reserved().desk }} reserved</li>
     </ul>
   </section>
 
@@ -205,7 +205,7 @@
     }
   </section>
 
-  <section class="edit" aria-label="Description and minimums">
+  <section class="edit" aria-label="Description and reservations">
     @if (draft(); as d) {
       <div class="fields">
         <label class="field">
@@ -218,7 +218,7 @@
           />
         </label>
         <label class="field narrow">
-          <span>Min ci</span>
+          <span>Reserved ci</span>
           <input
             class="input"
             type="number"
@@ -228,7 +228,7 @@
           />
         </label>
         <label class="field narrow">
-          <span>Min workspace</span>
+          <span>Reserved workspace</span>
           <input
             class="input"
             type="number"
@@ -238,7 +238,7 @@
           />
         </label>
         <label class="field narrow">
-          <span>Min desk</span>
+          <span>Reserved desk</span>
           <input
             class="input"
             type="number"

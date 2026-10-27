@@ -13,7 +13,7 @@ const TARGET = {
   name: 'build-box-1',
   description: 'the CI box',
   slotsTotal: 6,
-  minimums: { ci: 2, workspace: 2, desk: 1 },
+  reservations: { ci: 2, workspace: 2, desk: 1 },
   used: { ci: 2, workspace: 1, desk: 0 },
   login: { claude: 'PRESENT', kimi: 'ABSENT', checkedAt: '2026-10-23T08:00:00Z' },
   credentialVolume: 'qits-system-runner-work-build-box-1',
@@ -133,17 +133,35 @@ describe('TargetsPage', () => {
     await settle();
   });
 
-  it('lists a target with its slots against the minimums and its sign-in', async () => {
+  it('lists a target with its slots against the reservations and its sign-in', async () => {
     const page = await openWithOneTarget();
 
     expect(text(page)).toContain('build-box-1');
     expect(text(page)).toContain('3/6 slots used');
-    expect(text(page)).toContain('ci 2 (min 2)');
-    expect(text(page)).toContain('workspace 1 (min 2)');
-    expect(text(page)).toContain('desk 0 (min 1)');
+    expect(text(page)).toContain('ci 2 used, 2 reserved');
+    expect(text(page)).toContain('workspace 1 used, 2 reserved');
+    expect(text(page)).toContain('desk 0 used, 1 reserved');
     expect(text(page)).toContain('PRESENT');
     expect(text(page)).toContain('ABSENT');
     expect(text(page)).toContain(TARGET.loginCommand);
+  });
+
+  it('reads an older service’s deprecated minimums, and shows use above a reservation', async () => {
+    // qits-1682: a reservation is not a limit; ci uses 3 over 1 reserved while shared slots are free.
+    const older: Record<string, unknown> = { ...TARGET };
+    delete older['reservations'];
+    const page = await open();
+    http.expectOne(TARGETS_URL).flush([
+      {
+        ...older,
+        minimums: { ci: 1, workspace: 0, desk: 0 },
+        used: { ci: 3, workspace: 0, desk: 0 },
+      },
+    ]);
+    await settle();
+
+    expect(text(page)).toContain('ci 3 used, 1 reserved');
+    expect(text(page)).toContain('workspace 0 used, 0 reserved');
   });
 
   it('says so rather than drawing nothing when no targets are declared', async () => {
@@ -178,7 +196,7 @@ describe('TargetsPage', () => {
     await settle();
 
     setValue(createField(page, 'build-box-1'), 'build-box-2');
-    setValue(createField(page, 'Min ci'), '2');
+    setValue(createField(page, 'Reserved ci'), '2');
     await settle();
 
     button(page, 'Declare')?.click();
@@ -186,6 +204,7 @@ describe('TargetsPage', () => {
     expect(create.request.method).toBe('POST');
     expect(create.request.body).toEqual({
       name: 'build-box-2',
+      reservations: { ci: 2, workspace: 0, desk: 0 },
       minimums: { ci: 2, workspace: 0, desk: 0 },
     });
     create.flush({
@@ -207,7 +226,7 @@ describe('TargetsPage', () => {
     expect(text(page)).not.toContain('Install line');
   });
 
-  it('declares a target with a slots total, sending it alongside the minimums', async () => {
+  it('declares a target with a slots total, sending it alongside the reservations', async () => {
     const page = await open();
     http.expectOne(TARGETS_URL).flush([]);
     await settle();
@@ -220,6 +239,7 @@ describe('TargetsPage', () => {
     const create = http.expectOne(TARGETS_URL);
     expect(create.request.body).toEqual({
       name: 'build-box-3',
+      reservations: { ci: 0, workspace: 0, desk: 0 },
       minimums: { ci: 0, workspace: 0, desk: 0 },
       slots: 8,
     });
@@ -256,13 +276,13 @@ describe('TargetsPage', () => {
     expect(text(page)).toContain('409 a target build-box-1 already exists');
   });
 
-  it('edits minimums, and shows the 409 MINIMUMS_EXCEED_TOTAL inline', async () => {
+  it('edits reservations, and shows the 409 RESERVATIONS_EXCEED_TOTAL inline', async () => {
     const page = await openWithOneTarget();
 
     button(page, 'Edit')?.click();
     await settle();
 
-    setValue(editField(page, 'Min ci'), '10');
+    setValue(editField(page, 'Reserved ci'), '10');
     await settle();
 
     button(page, 'Save')?.click();
@@ -270,20 +290,23 @@ describe('TargetsPage', () => {
     expect(patch.request.method).toBe('PATCH');
     expect(patch.request.body).toEqual({
       description: 'the CI box',
+      reservations: { ci: 10, workspace: 2, desk: 1 },
       minimums: { ci: 10, workspace: 2, desk: 1 },
     });
     patch.flush(
       {
-        code: 'MINIMUMS_EXCEED_TOTAL',
-        message: 'the minimums (13) are above the total (6) the runner reports',
+        code: 'RESERVATIONS_EXCEED_TOTAL',
+        message: 'the reservations (13) are above the total (6) the runner reports',
       },
       { status: 409, statusText: 'Conflict' },
     );
     await settle();
 
-    expect(text(page)).toContain('the minimums (13) are above the total (6) the runner reports');
+    expect(text(page)).toContain(
+      'the reservations (13) are above the total (6) the runner reports',
+    );
     // The form stays open on a refusal, so the operator can lower a value and retry.
-    expect(editField(page, 'Min ci').value).toBe('10');
+    expect(editField(page, 'Reserved ci').value).toBe('10');
   });
 
   it('saves an edit that fits the total', async () => {

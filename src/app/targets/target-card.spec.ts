@@ -12,7 +12,7 @@ const TARGET: TargetDto = {
   name: 'build-box-1',
   description: 'the CI box',
   slotsTotal: 6,
-  minimums: { ci: 2, workspace: 2, desk: 1 },
+  reservations: { ci: 2, workspace: 2, desk: 1 },
   used: { ci: 0, workspace: 0, desk: 0 },
   login: { claude: 'ABSENT', kimi: 'PRESENT', checkedAt: '2026-10-23T08:00:00Z' },
   credentialVolume: 'qits-system-runner-work-build-box-1',

@@ -41,6 +41,10 @@ import type {
  * target with a claude sign-in awaiting its code` are recorded on `qits-system-service`'s
  * `ticket/qits-1593` branch and skip here until a release publishes them and the devDependency is
  * bumped.
+ *
+ * The rows still name `minimums`: the pinned golden masters predate `reservations` (qits-1682).
+ * The page reads `reservations` first and falls back to `minimums`. Once a golden-master release
+ * carries `reservations`, bump the devDependency and switch these paths to it.
  */
 const CONSUMER = 'qits-system-frontend';
 const PROVIDER = 'qits-system-service';

@@ -13,6 +13,9 @@ import { QitsButton } from '@qits/ui-components';
 import { errorCode, SystemApi } from '../api/system-api';
 import {
   MINIMUMS_EXCEED_TOTAL,
+  RESERVATIONS_EXCEED_TOTAL,
+  reservationsOf,
+  withReservations,
   SIGN_IN_RUNNING,
   TARGET_BUSY,
   TERMINAL_SIGN_IN_STATES,
@@ -73,7 +76,7 @@ const HARNESSES: readonly { readonly harness: SignInHarness; readonly label: str
 const SIGN_IN_ID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
 
 /**
- * One execution target: its slots, minimums, sign-in, quarantine, last health check, every write a
+ * One execution target: its slots, reservations, sign-in, quarantine, last health check, every write a
  * target offers, and its leases — the whole of what `TargetViews.TargetDto` carries (epic
  * qits-1481).
  *
@@ -121,7 +124,7 @@ export class TargetCard {
   protected readonly healthCheckRequested = signal(false);
 
   /** The rotate action's optional slots total. `null` means left blank — the service keeps
-   * `max(reported total, sum of minimums)`. */
+   * `max(reported total, sum of reservations)`. */
   protected readonly rotateSlots = signal<number | null>(null);
 
   protected readonly leasesOpen = signal(false);
@@ -157,6 +160,9 @@ export class TargetCard {
     });
   }
 
+  /** Slots reserved per type. Not a limit: a type may use more while shared slots are free. */
+  protected readonly reserved = computed(() => reservationsOf(this.target()));
+
   protected readonly usedTotal = computed(() => {
     const used = this.target().used;
     return used.ci + used.workspace + used.desk;
@@ -170,11 +176,12 @@ export class TargetCard {
 
   protected startEdit(): void {
     const target = this.target();
+    const reserved = reservationsOf(target);
     this.draft.set({
       description: target.description ?? '',
-      ci: target.minimums.ci,
-      workspace: target.minimums.workspace,
-      desk: target.minimums.desk,
+      ci: reserved.ci,
+      workspace: reserved.workspace,
+      desk: reserved.desk,
     });
     this.rowError.set(null);
   }
@@ -197,7 +204,7 @@ export class TargetCard {
     this.rowError.set(null);
     const body: PatchTargetDto = {
       description: draft.description,
-      minimums: { ci: draft.ci, workspace: draft.workspace, desk: draft.desk },
+      ...withReservations({ ci: draft.ci, workspace: draft.workspace, desk: draft.desk }),
     };
     try {
       await this.api.patchTarget(this.target().id, body);
@@ -205,9 +212,9 @@ export class TargetCard {
       this.changed.emit();
     } catch (error) {
       this.rowError.set(
-        errorCode(error) === MINIMUMS_EXCEED_TOTAL
+        errorCode(error) === RESERVATIONS_EXCEED_TOTAL || errorCode(error) === MINIMUMS_EXCEED_TOTAL
           ? `Could not save — ${describeError(error)}.`
-          : `Could not save these minimums — ${describeError(error)}.`,
+          : `Could not save these reservations — ${describeError(error)}.`,
       );
     } finally {
       this.busy.set(null);

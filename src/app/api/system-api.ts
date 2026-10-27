@@ -207,7 +207,7 @@ export class SystemApi {
     );
   }
 
-  /** Changes a target's description or minimums. 409 `MINIMUMS_EXCEED_TOTAL` when their sum is
+  /** Changes a target's description or reservations. 409 `RESERVATIONS_EXCEED_TOTAL` when their sum is
    * above the total the runner last reported. */
   patchTarget(id: string, body: PatchTargetDto): Promise<TargetDto> {
     return firstValueFrom(this.http.patch<TargetDto>(this.targetUrl(id), body));
@@ -363,7 +363,7 @@ export function isNodeRemote(error: unknown): boolean {
  * The `code` of a failed write's `{"message": …, "code": …}` body, when it carries one.
  *
  * The targets doors answer several named codes on the one status (409 alone carries
- * `MINIMUMS_EXCEED_TOTAL`, `TARGET_BUSY` and `TARGET_UNAVAILABLE`), so a caller that must read one
+ * `RESERVATIONS_EXCEED_TOTAL`, `TARGET_BUSY` and `TARGET_UNAVAILABLE`), so a caller that must read one
  * apart from the others asks this rather than growing a fourth `isXxx` beside {@link isNodeRemote}.
  */
 export function errorCode(error: unknown): string | undefined {

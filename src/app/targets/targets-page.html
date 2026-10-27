@@ -3,7 +3,7 @@
 </header>
 <p class="lede">
   The swarms qits-system-runner-daemon holds typed slots on — ci, workspace and desk — each with a
-  total, a minimum per type and its own sign-in.
+  total, slots reserved per type and its own sign-in.
 </p>
 
 <app-async
@@ -39,33 +39,33 @@
         />
       </label>
       <label class="field narrow">
-        <span>Min ci</span>
+        <span>Reserved ci</span>
         <input
           class="input"
           type="number"
           min="0"
-          [value]="minCi()"
-          (input)="minCi.set($any($event.target).valueAsNumber)"
+          [value]="reservedCi()"
+          (input)="reservedCi.set($any($event.target).valueAsNumber)"
         />
       </label>
       <label class="field narrow">
-        <span>Min workspace</span>
+        <span>Reserved workspace</span>
         <input
           class="input"
           type="number"
           min="0"
-          [value]="minWorkspace()"
-          (input)="minWorkspace.set($any($event.target).valueAsNumber)"
+          [value]="reservedWorkspace()"
+          (input)="reservedWorkspace.set($any($event.target).valueAsNumber)"
         />
       </label>
       <label class="field narrow">
-        <span>Min desk</span>
+        <span>Reserved desk</span>
         <input
           class="input"
           type="number"
           min="0"
-          [value]="minDesk()"
-          (input)="minDesk.set($any($event.target).valueAsNumber)"
+          [value]="reservedDesk()"
+          (input)="reservedDesk.set($any($event.target).valueAsNumber)"
         />
       </label>
       <label class="field narrow">
