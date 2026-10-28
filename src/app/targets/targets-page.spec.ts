@@ -146,15 +146,13 @@ describe('TargetsPage', () => {
     expect(text(page)).toContain(TARGET.loginCommand);
   });
 
-  it('reads an older service’s deprecated minimums, and shows use above a reservation', async () => {
+  it('shows use above a reservation', async () => {
     // qits-1682: a reservation is not a limit; ci uses 3 over 1 reserved while shared slots are free.
-    const older: Record<string, unknown> = { ...TARGET };
-    delete older['reservations'];
     const page = await open();
     http.expectOne(TARGETS_URL).flush([
       {
-        ...older,
-        minimums: { ci: 1, workspace: 0, desk: 0 },
+        ...TARGET,
+        reservations: { ci: 1, workspace: 0, desk: 0 },
         used: { ci: 3, workspace: 0, desk: 0 },
       },
     ]);
@@ -205,7 +203,6 @@ describe('TargetsPage', () => {
     expect(create.request.body).toEqual({
       name: 'build-box-2',
       reservations: { ci: 2, workspace: 0, desk: 0 },
-      minimums: { ci: 2, workspace: 0, desk: 0 },
     });
     create.flush({
       target: { ...TARGET, id: 't2', name: 'build-box-2' },
@@ -240,7 +237,6 @@ describe('TargetsPage', () => {
     expect(create.request.body).toEqual({
       name: 'build-box-3',
       reservations: { ci: 0, workspace: 0, desk: 0 },
-      minimums: { ci: 0, workspace: 0, desk: 0 },
       slots: 8,
     });
     create.flush({
@@ -291,7 +287,6 @@ describe('TargetsPage', () => {
     expect(patch.request.body).toEqual({
       description: 'the CI box',
       reservations: { ci: 10, workspace: 2, desk: 1 },
-      minimums: { ci: 10, workspace: 2, desk: 1 },
     });
     patch.flush(
       {

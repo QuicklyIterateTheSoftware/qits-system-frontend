@@ -12,10 +12,7 @@ import {
 import { QitsButton } from '@qits/ui-components';
 import { errorCode, SystemApi } from '../api/system-api';
 import {
-  MINIMUMS_EXCEED_TOTAL,
   RESERVATIONS_EXCEED_TOTAL,
-  reservationsOf,
-  withReservations,
   SIGN_IN_RUNNING,
   TARGET_BUSY,
   TERMINAL_SIGN_IN_STATES,
@@ -161,7 +158,7 @@ export class TargetCard {
   }
 
   /** Slots reserved per type. Not a limit: a type may use more while shared slots are free. */
-  protected readonly reserved = computed(() => reservationsOf(this.target()));
+  protected readonly reserved = computed(() => this.target().reservations);
 
   protected readonly usedTotal = computed(() => {
     const used = this.target().used;
@@ -176,7 +173,7 @@ export class TargetCard {
 
   protected startEdit(): void {
     const target = this.target();
-    const reserved = reservationsOf(target);
+    const reserved = target.reservations;
     this.draft.set({
       description: target.description ?? '',
       ci: reserved.ci,
@@ -204,7 +201,7 @@ export class TargetCard {
     this.rowError.set(null);
     const body: PatchTargetDto = {
       description: draft.description,
-      ...withReservations({ ci: draft.ci, workspace: draft.workspace, desk: draft.desk }),
+      reservations: { ci: draft.ci, workspace: draft.workspace, desk: draft.desk },
     };
     try {
       await this.api.patchTarget(this.target().id, body);
@@ -212,7 +209,7 @@ export class TargetCard {
       this.changed.emit();
     } catch (error) {
       this.rowError.set(
-        errorCode(error) === RESERVATIONS_EXCEED_TOTAL || errorCode(error) === MINIMUMS_EXCEED_TOTAL
+        errorCode(error) === RESERVATIONS_EXCEED_TOTAL
           ? `Could not save — ${describeError(error)}.`
           : `Could not save these reservations — ${describeError(error)}.`,
       );

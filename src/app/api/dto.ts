@@ -272,11 +272,8 @@ export interface TargetDto {
   readonly name: string;
   readonly description: string | null;
   readonly slotsTotal: number;
-  /** Slots reserved per type. Not a limit: a type may use more while shared slots are free.
-   * Absent from a qits-system older than qits-1682; read it through {@link reservationsOf}. */
-  readonly reservations?: SlotCountsDto;
-  /** @deprecated The old name of `reservations`, same values (qits-1682). */
-  readonly minimums?: SlotCountsDto;
+  /** Slots reserved per type. Not a limit: a type may use more while shared slots are free. */
+  readonly reservations: SlotCountsDto;
   readonly used: SlotCountsDto;
   readonly login: TargetLoginDto;
   readonly credentialVolume: string | null;
@@ -313,9 +310,6 @@ export interface CreateTargetDto {
   readonly name: string;
   readonly description?: string;
   readonly reservations?: Partial<SlotCountsDto>;
-  /** @deprecated The old name of `reservations`; send both until every qits-system reads the new
-   * one (qits-1682). */
-  readonly minimums?: Partial<SlotCountsDto>;
   readonly slots?: number;
 }
 
@@ -332,22 +326,6 @@ export interface RotateTargetRegistrationTokenDto {
 export interface PatchTargetDto {
   readonly description?: string | null;
   readonly reservations?: Partial<SlotCountsDto>;
-  /** @deprecated The old name of `reservations`; send both until every qits-system reads the new
-   * one (qits-1682). */
-  readonly minimums?: Partial<SlotCountsDto>;
-}
-
-/** A target's reservations: `reservations`, else the deprecated `minimums` an older qits-system
- * answers (qits-1682). */
-export function reservationsOf(target: TargetDto): SlotCountsDto {
-  return target.reservations ?? target.minimums ?? { ci: 0, workspace: 0, desk: 0 };
-}
-
-/** The same reservations under the new name and the deprecated one, for a write (qits-1682). */
-export function withReservations(
-  reservations: Partial<SlotCountsDto>,
-): Pick<PatchTargetDto, 'reservations' | 'minimums'> {
-  return { reservations, minimums: reservations };
 }
 
 /** `POST /targets/{id}/healthcheck`, 202: the request this ask was given, settled later. */
@@ -446,9 +424,6 @@ export interface LeaseDto {
 
 /** `PATCH /targets/{id}`, 409: the reservations' sum is above the total the runner reported. */
 export const RESERVATIONS_EXCEED_TOTAL = 'RESERVATIONS_EXCEED_TOTAL';
-
-/** @deprecated {@link RESERVATIONS_EXCEED_TOTAL} as a qits-system older than qits-1682 names it. */
-export const MINIMUMS_EXCEED_TOTAL = 'MINIMUMS_EXCEED_TOTAL';
 
 /** `DELETE /targets/{id}`, 409: it still holds a lease that has not ended. */
 export const TARGET_BUSY = 'TARGET_BUSY';

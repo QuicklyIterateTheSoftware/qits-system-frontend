@@ -41,10 +41,6 @@ import type {
  * target with a claude sign-in awaiting its code` are recorded on `qits-system-service`'s
  * `ticket/qits-1593` branch and skip here until a release publishes them and the devDependency is
  * bumped.
- *
- * The rows still name `minimums`: the pinned golden masters predate `reservations` (qits-1682).
- * The page reads `reservations` first and falls back to `minimums`. Once a golden-master release
- * carries `reservations`, bump the devDependency and switch these paths to it.
  */
 const CONSUMER = 'qits-system-frontend';
 const PROVIDER = 'qits-system-service';
@@ -160,7 +156,7 @@ describe('qits-system-frontend → qits-system-service pact: SystemApi (targets)
         'target.name',
         'target.description',
         'target.slotsTotal',
-        'target.minimums',
+        'target.reservations',
         'target.used',
         'target.login',
         'target.connected',
@@ -177,13 +173,13 @@ describe('qits-system-frontend → qits-system-service pact: SystemApi (targets)
   );
 
   it.skipIf(!recorded(DECLARED_TARGET, 'listTargets'))(
-    'list-targets: listTargets answers the slots, minimums, login and quarantine every row draws',
+    'list-targets: listTargets answers the slots, reservations, login and quarantine every row draws',
     () =>
       given(DECLARED_TARGET, 'listTargets', 'list-targets', [
         '[].id',
         '[].name',
         '[].slotsTotal',
-        '[].minimums',
+        '[].reservations',
         '[].used',
         '[].login',
         '[].connected',
@@ -196,7 +192,7 @@ describe('qits-system-frontend → qits-system-service pact: SystemApi (targets)
       ]).executeTest(async (server) => {
         const targets = await apiAt(server.url).targets();
         expect(targets.length).toBeGreaterThan(0);
-        expect(targets[0].minimums).toBeDefined();
+        expect(targets[0].reservations).toBeDefined();
         expect(targets[0].used).toBeDefined();
       }),
   );
@@ -209,7 +205,7 @@ describe('qits-system-frontend → qits-system-service pact: SystemApi (targets)
         'name',
         'description',
         'slotsTotal',
-        'minimums',
+        'reservations',
         'used',
         'login',
         'credentialVolume',
@@ -236,14 +232,14 @@ describe('qits-system-frontend → qits-system-service pact: SystemApi (targets)
   );
 
   it.skipIf(!recorded(DECLARED_TARGET, 'patchTarget'))(
-    'save-target-edit: patchTarget sends exactly description and the changed minimums',
+    'save-target-edit: patchTarget sends exactly description and the changed reservations',
     () => {
       const body = sent(DECLARED_TARGET, 'patchTarget') as PatchTargetDto;
       return given(DECLARED_TARGET, 'patchTarget', 'save-target-edit', [
         'id',
         'name',
         'description',
-        'minimums',
+        'reservations',
       ]).executeTest(async (server) => {
         const patched = await apiAt(server.url).patchTarget(
           param(DECLARED_TARGET, 'patchTarget', 'targetId'),
@@ -335,7 +331,9 @@ describe('qits-system-frontend → qits-system-service pact: SystemApi (targets)
         'ok',
         'detail',
         'requestId',
-        'checks',
+        'checks[].name',
+        'checks[].ok',
+        'checks[].detail',
       ]).executeTest(async (server) => {
         const report = await apiAt(server.url).targetHealth(
           param(DECLARED_TARGET, 'getTargetHealth', 'targetId'),

@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { QitsButton } from '@qits/ui-components';
 import { SystemApi } from '../api/system-api';
-import { withReservations } from '../api/dto';
 import type { CreateTargetDto, TargetDto, TargetRegistrationDto } from '../api/dto';
 import { Async } from '../ui/async';
 import { CopyText } from '../ui/copy-text';
@@ -99,11 +98,11 @@ export class TargetsPage {
     const body: CreateTargetDto = {
       name,
       ...(description ? { description } : {}),
-      ...withReservations({
+      reservations: {
         ci: this.reservedCi(),
         workspace: this.reservedWorkspace(),
         desk: this.reservedDesk(),
-      }),
+      },
       ...(slots !== null ? { slots } : {}),
     };
     try {

@@ -269,12 +269,12 @@
         "body": {
           "content": {
             "description": "the lab box",
-            "minimums": {
+            "name": "lab",
+            "reservations": {
               "ci": 2,
               "desk": 1,
               "workspace": 2
-            },
-            "name": "lab"
+            }
           },
           "contentType": "application/json",
           "encoded": false
@@ -301,13 +301,13 @@
                 "claude": "UNKNOWN",
                 "kimi": "UNKNOWN"
               },
-              "minimums": {
+              "name": "lab",
+              "quarantined": true,
+              "reservations": {
                 "ci": 2,
                 "desk": 1,
                 "workspace": 2
               },
-              "name": "lab",
-              "quarantined": true,
               "slotsTotal": 0,
               "used": {
                 "ci": 0,
@@ -383,30 +383,6 @@
                 }
               ]
             },
-            "$.target.minimums.ci": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "number"
-                }
-              ]
-            },
-            "$.target.minimums.desk": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "number"
-                }
-              ]
-            },
-            "$.target.minimums.workspace": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "number"
-                }
-              ]
-            },
             "$.target.name": {
               "combine": "AND",
               "matchers": [
@@ -420,6 +396,30 @@
               "matchers": [
                 {
                   "match": "type"
+                }
+              ]
+            },
+            "$.target.reservations.ci": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.target.reservations.desk": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.target.reservations.workspace": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
                 }
               ]
             },
@@ -674,27 +674,18 @@
             "at": "2026-01-01T00:00:00Z",
             "checks": [
               {
-                "data": {},
                 "detail": null,
                 "name": "docker",
                 "ok": true
               },
               {
-                "data": {
-                  "claude": "PRESENT",
-                  "kimi": "ABSENT"
-                },
                 "detail": null,
-                "name": "login",
+                "name": "docker",
                 "ok": true
               },
               {
-                "data": {
-                  "minimums": 5,
-                  "total": 6
-                },
                 "detail": null,
-                "name": "slots",
+                "name": "docker",
                 "ok": true
               }
             ],
@@ -725,104 +716,37 @@
               "combine": "AND",
               "matchers": [
                 {
-                  "match": "arrayContains",
-                  "variants": [
-                    {
-                      "index": 0,
-                      "rules": {
-                        "$.name": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "type"
-                            }
-                          ]
-                        },
-                        "$.ok": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "type"
-                            }
-                          ]
-                        }
-                      }
-                    },
-                    {
-                      "index": 1,
-                      "rules": {
-                        "$.data.claude": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "type"
-                            }
-                          ]
-                        },
-                        "$.data.kimi": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "type"
-                            }
-                          ]
-                        },
-                        "$.name": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "type"
-                            }
-                          ]
-                        },
-                        "$.ok": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "type"
-                            }
-                          ]
-                        }
-                      }
-                    },
-                    {
-                      "index": 2,
-                      "rules": {
-                        "$.data.minimums": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "number"
-                            }
-                          ]
-                        },
-                        "$.data.total": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "number"
-                            }
-                          ]
-                        },
-                        "$.name": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "type"
-                            }
-                          ]
-                        },
-                        "$.ok": {
-                          "combine": "AND",
-                          "matchers": [
-                            {
-                              "match": "type"
-                            }
-                          ]
-                        }
-                      }
-                    }
-                  ]
+                  "match": "type",
+                  "max": 3,
+                  "min": 3
+                }
+              ]
+            },
+            "$.checks[*].name": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                },
+                {
+                  "match": "type"
+                },
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.checks[*].ok": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                },
+                {
+                  "match": "type"
+                },
+                {
+                  "match": "type"
                 }
               ]
             },
@@ -1029,13 +953,13 @@
                 "kimi": "ABSENT"
               },
               "loginCommand": null,
-              "minimums": {
+              "name": "lab",
+              "quarantined": false,
+              "reservations": {
                 "ci": 2,
                 "desk": 1,
                 "workspace": 2
               },
-              "name": "lab",
-              "quarantined": false,
               "runnerVersion": "2026.1023.1",
               "slotsTotal": 6,
               "used": {
@@ -1124,30 +1048,6 @@
                 }
               ]
             },
-            "$[*].minimums.ci": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "number"
-                }
-              ]
-            },
-            "$[*].minimums.desk": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "number"
-                }
-              ]
-            },
-            "$[*].minimums.workspace": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "number"
-                }
-              ]
-            },
             "$[*].name": {
               "combine": "AND",
               "matchers": [
@@ -1161,6 +1061,30 @@
               "matchers": [
                 {
                   "match": "type"
+                }
+              ]
+            },
+            "$[*].reservations.ci": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$[*].reservations.desk": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$[*].reservations.workspace": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
                 }
               ]
             },
@@ -1429,17 +1353,17 @@
               "kimi": "ABSENT"
             },
             "loginCommand": null,
-            "minimums": {
-              "ci": 2,
-              "desk": 1,
-              "workspace": 2
-            },
             "name": "lab",
             "quarantineReason": null,
             "quarantined": false,
             "quarantinedAt": null,
             "registered": true,
             "registeredAt": "2026-01-01T00:00:00Z",
+            "reservations": {
+              "ci": 2,
+              "desk": 1,
+              "workspace": 2
+            },
             "runnerVersion": "2026.1023.1",
             "slotsTotal": 6,
             "used": {
@@ -1551,30 +1475,6 @@
                 }
               ]
             },
-            "$.minimums.ci": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "number"
-                }
-              ]
-            },
-            "$.minimums.desk": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "number"
-                }
-              ]
-            },
-            "$.minimums.workspace": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "number"
-                }
-              ]
-            },
             "$.name": {
               "combine": "AND",
               "matchers": [
@@ -1605,6 +1505,30 @@
                 {
                   "match": "regex",
                   "regex": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:?\\d{2})$"
+                }
+              ]
+            },
+            "$.reservations.ci": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.reservations.desk": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.reservations.workspace": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
                 }
               ]
             },
@@ -1901,7 +1825,7 @@
         "body": {
           "content": {
             "description": "the lab box, rebuilt",
-            "minimums": {
+            "reservations": {
               "desk": 0
             }
           },
@@ -1937,12 +1861,12 @@
           "content": {
             "description": "the lab box, rebuilt",
             "id": "00000000-0000-4000-8000-000000000001",
-            "minimums": {
+            "name": "lab",
+            "reservations": {
               "ci": 2,
               "desk": 0,
               "workspace": 2
-            },
-            "name": "lab"
+            }
           },
           "contentType": "application/json",
           "encoded": false
@@ -1971,35 +1895,35 @@
                 }
               ]
             },
-            "$.minimums.ci": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "number"
-                }
-              ]
-            },
-            "$.minimums.desk": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "number"
-                }
-              ]
-            },
-            "$.minimums.workspace": {
-              "combine": "AND",
-              "matchers": [
-                {
-                  "match": "number"
-                }
-              ]
-            },
             "$.name": {
               "combine": "AND",
               "matchers": [
                 {
                   "match": "type"
+                }
+              ]
+            },
+            "$.reservations.ci": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.reservations.desk": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
+                }
+              ]
+            },
+            "$.reservations.workspace": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "number"
                 }
               ]
             }
