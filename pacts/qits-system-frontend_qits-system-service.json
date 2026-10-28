@@ -269,12 +269,12 @@
         "body": {
           "content": {
             "description": "the lab box",
-            "minimums": {
+            "name": "lab",
+            "reservations": {
               "ci": 2,
               "desk": 1,
               "workspace": 2
-            },
-            "name": "lab"
+            }
           },
           "contentType": "application/json",
           "encoded": false
@@ -691,6 +691,7 @@
               {
                 "data": {
                   "minimums": 5,
+                  "reservations": 5,
                   "total": 6
                 },
                 "detail": null,
@@ -789,6 +790,14 @@
                       "index": 2,
                       "rules": {
                         "$.data.minimums": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "number"
+                            }
+                          ]
+                        },
+                        "$.data.reservations": {
                           "combine": "AND",
                           "matchers": [
                             {
@@ -1901,7 +1910,7 @@
         "body": {
           "content": {
             "description": "the lab box, rebuilt",
-            "minimums": {
+            "reservations": {
               "desk": 0
             }
           },
