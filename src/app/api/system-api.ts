@@ -175,8 +175,10 @@ export class SystemApi {
    *
    * It is absolute because `WebSocket` takes no relative URL, and the scheme is derived from the
    * page's rather than configured: the SPA is same-origin with the service by construction, so any
-   * other answer would be describing a deployment that does not exist. The session cookie the edge
-   * set is what authenticates the upgrade — a socket cannot carry an Authorization header.
+   * other answer would be describing a deployment that does not exist. `WEB_SOCKET_FACTORY`
+   * (`@qits/angular`'s `QITS_WEB_SOCKET`, epic qits-543) is what authenticates the upgrade now — a
+   * socket cannot carry an `Authorization` header, so the bearer rides as the `qits.bearer`
+   * subprotocol instead of the session cookie.
    */
   socketUrl(id: string): string {
     const page = this.document.defaultView?.location;

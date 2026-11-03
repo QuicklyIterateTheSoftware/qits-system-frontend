@@ -1,6 +1,7 @@
 import { provideBrowserGlobalErrorListeners, type ApplicationConfig } from '@angular/core';
-import { provideHttpClient, withFetch } from '@angular/common/http';
+import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
+import { provideQitsBearerSignIn, qitsBearerInterceptor } from '@qits/angular';
 import {
   provideQitsBuilds,
   provideQitsNavigation,
@@ -11,18 +12,20 @@ import {
 import { routes } from './app.routes';
 
 /**
- * Seven providers, in the order every sibling repeats.
+ * Nine providers, in the order every sibling repeats.
  *
  * - `provideBrowserGlobalErrorListeners` funnels genuinely-global errors and unhandled rejections
  *   into Angular's `ErrorHandler`.
  * - `provideRouter` carries this app's state: every level of it is a path segment, so each screen
  *   is bookmarkable and the back button works with no code.
- * - `withFetch` is not a preference. The default XHR backend is invisible to OTLP fetch
- *   instrumentation, so choosing it would quietly forfeit client spans the moment this deployment
- *   grows a telemetry relay. Every call this app makes is a same-origin path behind the edge, and
- *   none of them is anonymous: the edge's session is what authenticates them, and it does so with
- *   cookies a same-origin request sends by default. The terminal socket rides the same session, for
- *   the same reason — a `WebSocket` cannot carry an Authorization header.
+ * - `provideQitsBearerSignIn({ clientId: 'qits-spa' })` signs this page in with the idp's public PKCE
+ *   client and puts `/auth/callback` in front of the app's own routes (epic qits-543). `withFetch`
+ *   is not a preference. The default XHR backend is invisible to OTLP fetch instrumentation, so
+ *   choosing it would quietly forfeit client spans the moment this deployment grows a telemetry
+ *   relay, and it is also what `qitsBearerInterceptor` needs to attach the bearer. Every call this
+ *   app makes is a same-origin path behind the edge, and the bearer authenticates it now rather than
+ *   the session cookie. The terminal socket carries the same bearer, offered as the `qits.bearer`
+ *   subprotocol — a `WebSocket` cannot carry an `Authorization` header.
  * - `provideQitsNavigation` gives `QitsMainLayout` its left navigation, by asking the edge for
  *   `/main-navigation` once at startup. The tree is the edge's answer — derived from the deployments
  *   it actually routes — not a list compiled into @qits/ui-components; without this provider the
@@ -46,7 +49,8 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
-    provideHttpClient(withFetch()),
+    provideQitsBearerSignIn({ clientId: 'qits-spa' }),
+    provideHttpClient(withFetch(), withInterceptors([qitsBearerInterceptor])),
     provideQitsNavigation(),
     provideQitsProjects(),
     provideQitsScope('system'),
