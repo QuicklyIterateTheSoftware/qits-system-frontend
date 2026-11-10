@@ -37,7 +37,7 @@
     "@eslint/js": "^10.0.1",
     "@ngrx/signals": "^21.1.1",
     "@pact-foundation/pact": "17.1.4",
-    "@qits/angular": "2026.1109.234938",
+    "@qits/angular": "2026.1110.185316",
     "@qits/ci-golden-masters": "2026.1109.132507",
     "@qits/edge-golden-masters": "2026.1109.84319",
     "@qits/projects-golden-masters": "2026.1110.31824",
