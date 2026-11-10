@@ -41,7 +41,7 @@
     "@qits/ci-golden-masters": "2026.1109.132507",
     "@qits/edge-golden-masters": "2026.1109.84319",
     "@qits/projects-golden-masters": "2026.1110.31824",
-    "@qits/system-golden-masters": "2026.1108.50219",
+    "@qits/system-golden-masters": "2026.1110.173442",
     "@types/node": "^20.19.43",
     "angular-eslint": "^21.4.0",
     "eslint": "^10.8.0",
