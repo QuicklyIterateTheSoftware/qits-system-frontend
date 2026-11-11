@@ -39,7 +39,7 @@
     "@pact-foundation/pact": "17.1.4",
     "@qits/angular": "2026.1111.170437",
     "@qits/ci-golden-masters": "2026.1109.132507",
-    "@qits/edge-golden-masters": "2026.1109.84319",
+    "@qits/edge-golden-masters": "2026.1111.182144",
     "@qits/projects-golden-masters": "2026.1111.82815",
     "@qits/system-golden-masters": "2026.1110.173442",
     "@types/node": "^20.19.43",
