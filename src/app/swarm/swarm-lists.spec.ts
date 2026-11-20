@@ -9,9 +9,10 @@ import { routes } from '../app.routes';
 import { settle as settleFixture } from '../testing/settle';
 
 /**
- * The four swarm listings, in the four states any of them can be in.
+ * The remaining swarm listings — nodes, configs and secrets — in the states any of them can be in.
+ * `services` moved to the landing app (qits-2344); `services-redirect.spec.ts` covers its hand-off.
  *
- * They are one spec rather than four because they are one shape: a read, a table, an empty sentence
+ * They are one spec rather than three because they are one shape: a read, a table, an empty sentence
  * and an error with a retry. Asserting that shape once per page is what keeps a copied page from
  * quietly losing its empty state — the state nobody notices is missing until a fresh platform shows
  * a blank screen.
@@ -107,35 +108,6 @@ describe('the swarm listings', () => {
       http.expectOne('/system/api/swarm/nodes').flush([NODE]);
       await settle();
       expect(rows(page)).toBe(1);
-    });
-  });
-
-  describe('services', () => {
-    /** docker's own replica string, drawn as it comes: `global` has no two numbers to split. */
-    it('draws the replica string docker sends, unparsed', async () => {
-      const page = await open('/swarm/services');
-      http.expectOne('/system/api/swarm/services').flush([
-        {
-          id: 's1',
-          name: 'qits-platform-idp',
-          mode: 'replicated',
-          replicas: '0/1',
-          image: 'qits/idp:1',
-        },
-        { id: 's2', name: 'qits-dns', mode: 'global', replicas: 'global', image: 'qits/dns:1' },
-      ]);
-      await settle();
-
-      expect(rows(page)).toBe(2);
-      expect(text(page)).toContain('0/1');
-      expect(text(page)).toContain('global');
-    });
-
-    it('says so when the swarm runs nothing', async () => {
-      const page = await open('/swarm/services');
-      http.expectOne('/system/api/swarm/services').flush([]);
-      await settle();
-      expect(text(page)).toContain('This swarm is running no services');
     });
   });
 
