@@ -2,23 +2,28 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideLocationMocks } from '@angular/common/testing';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { ActivatedRoute, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { provideQitsNavigation, provideQitsNavigationTree } from '@qits/ui-components';
 import { routes } from '../app.routes';
-import { NAVIGATE_AWAY } from '../ui/navigate-away';
-import { LANDING_ORIGIN_WAIT_MS, ServicesRedirect } from './services-redirect';
+import { NAVIGATE_AWAY } from './navigate-away';
+import {
+  LANDING_ORIGIN_WAIT_MS,
+  LandingRedirect,
+  type LandingRedirectData,
+} from './landing-redirect';
 
 /** Where the fixture navigation says `qits-landing` answers — its own host, not this one. */
 const LANDING_ORIGIN = 'https://landing.qits.example';
 
 /**
- * `swarm/services`, the swarm-wide listing moved to the landing app (qits-2344): the point of this
- * group is that the hand-off actually happens through real routing, rather than a stubbed
- * `ActivatedRoute` — `app.spec.ts` never instantiates this page either, so this is the only place
- * reaching this address through the real route table would show a wrong destination.
+ * The hand-off every moved System page mounts — `swarm/services` (qits-2344) and `swarm/nodes`
+ * (qits-2346) so far — the point of this group is that the hand-off actually happens through real
+ * routing, rather than a stubbed `ActivatedRoute` — `app.spec.ts` never instantiates this page
+ * either, so this is the only place reaching one of these addresses through the real route table
+ * would show a wrong destination.
  */
-describe('ServicesRedirect', () => {
+describe('LandingRedirect', () => {
   describe('reached through routing', () => {
     let harness: RouterTestingHarness;
     let navigateAway: ReturnType<typeof vi.fn>;
@@ -31,7 +36,9 @@ describe('ServicesRedirect', () => {
           provideLocationMocks(),
           provideHttpClient(),
           provideHttpClientTesting(),
-          provideQitsNavigationTree({ applications: { 'qits-landing': { origin: LANDING_ORIGIN } } }),
+          provideQitsNavigationTree({
+            applications: { 'qits-landing': { origin: LANDING_ORIGIN } },
+          }),
           { provide: NAVIGATE_AWAY, useValue: navigateAway },
         ],
       });
@@ -43,17 +50,32 @@ describe('ServicesRedirect', () => {
       await vi.waitFor(() => expect(navigateAway).toHaveBeenCalled());
       expect(navigateAway).toHaveBeenCalledWith(`${LANDING_ORIGIN}/system/swarm/services`);
     });
+
+    it('hands the swarm nodes listing off to the landing app', async () => {
+      await harness.navigateByUrl('/swarm/nodes');
+      await vi.waitFor(() => expect(navigateAway).toHaveBeenCalled());
+      expect(navigateAway).toHaveBeenCalledWith(`${LANDING_ORIGIN}/system/swarm/nodes`);
+    });
   });
 
   /**
-   * The origin-resolution fallback chain, in isolation from the route table that decides this
-   * component gets reached at all — the group above covers that.
+   * The origin-resolution fallback chain, and the route `data` this component reads, in isolation
+   * from the route table that decides which page gets reached at all — the group above covers that.
    */
   describe('when the landing origin never answers', () => {
+    const DATA: LandingRedirectData = {
+      landingPath: '/system/swarm/services',
+      moved: 'The swarm services moved to the landing app.',
+    };
+
     function configure(...providers: unknown[]): { navigateAway: ReturnType<typeof vi.fn> } {
       const navigateAway = vi.fn();
       TestBed.configureTestingModule({
-        providers: [{ provide: NAVIGATE_AWAY, useValue: navigateAway }, ...providers],
+        providers: [
+          { provide: NAVIGATE_AWAY, useValue: navigateAway },
+          { provide: ActivatedRoute, useValue: { snapshot: { data: DATA } } },
+          ...providers,
+        ],
       });
       return { navigateAway };
     }
@@ -73,7 +95,7 @@ describe('ServicesRedirect', () => {
           provideHttpClientTesting(),
           provideQitsNavigation(),
         );
-        const fixture = TestBed.createComponent(ServicesRedirect);
+        const fixture = TestBed.createComponent(LandingRedirect);
         fixture.detectChanges();
         const http = TestBed.inject(HttpTestingController);
         http.expectOne('/main-navigation');

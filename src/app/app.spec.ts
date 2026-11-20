@@ -9,6 +9,7 @@ import { App } from './app';
 import { routes } from './app.routes';
 import { WEB_SOCKET_FACTORY } from './api/web-socket';
 import { FakeSockets } from './testing/fake-socket';
+import { NAVIGATE_AWAY } from './ui/navigate-away';
 
 /**
  * A fixture navigation, not the platform's. `provideQitsNavigationLinks` answers the layout's
@@ -43,6 +44,10 @@ describe('App', () => {
         provideHttpClientTesting(),
         provideQitsNavigationLinks(NAV),
         { provide: WEB_SOCKET_FACTORY, useValue: sockets.open },
+        // The hand-off at `/swarm/nodes` fires this the moment it mounts; nothing here tests where
+        // it goes — `landing-redirect.spec.ts` does — so this keeps it from ever reaching
+        // jsdom's unimplemented real navigation.
+        { provide: NAVIGATE_AWAY, useValue: () => undefined },
       ],
     });
     http = TestBed.inject(HttpTestingController);
@@ -87,10 +92,9 @@ describe('App', () => {
 
   it('routes each swarm listing to its page, still inside the chrome', async () => {
     const harness = await RouterTestingHarness.create('/swarm/nodes');
-    http.expectOne('/system/api/swarm/nodes').flush([]);
     await harness.fixture.whenStable();
     expect(
-      (harness.routeNativeElement as HTMLElement).querySelector('main app-nodes-page'),
+      (harness.routeNativeElement as HTMLElement).querySelector('main app-landing-redirect'),
     ).not.toBeNull();
 
     await harness.navigateByUrl('/swarm/configs');

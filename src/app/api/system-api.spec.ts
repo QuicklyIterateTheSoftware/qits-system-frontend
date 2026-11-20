@@ -42,10 +42,6 @@ describe('SystemApi', () => {
   });
 
   it('lists the swarm as bare arrays, never an envelope', async () => {
-    const nodes = api.nodes();
-    http.expectOne('/system/api/swarm/nodes').flush([{ id: 'n1', hostname: 'wohlben' }]);
-    expect(await nodes).toHaveLength(1);
-
     const services = api.services();
     http.expectOne('/system/api/swarm/services').flush([]);
     expect(await services).toEqual([]);

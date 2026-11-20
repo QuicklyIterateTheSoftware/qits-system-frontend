@@ -1,6 +1,7 @@
 import type { Routes } from '@angular/router';
 import { QitsMainLayout } from '@qits/ui-components';
 import { NotFound } from './not-found/not-found';
+import type { LandingRedirectData } from './ui/landing-redirect';
 
 /**
  * Every address of this app, all of them inside the platform chrome.
@@ -53,7 +54,11 @@ export const routes: Routes = [
       {
         path: 'swarm/nodes',
         pathMatch: 'full',
-        loadComponent: () => import('./swarm/nodes-page').then((m) => m.NodesPage),
+        loadComponent: () => import('./ui/landing-redirect').then((m) => m.LandingRedirect),
+        data: {
+          landingPath: '/system/swarm/nodes',
+          moved: 'The swarm nodes moved to the landing app.',
+        } satisfies LandingRedirectData,
       },
       {
         path: 'swarm/nodes/:id',
@@ -82,7 +87,11 @@ export const routes: Routes = [
       {
         path: 'swarm/services',
         pathMatch: 'full',
-        loadComponent: () => import('./swarm/services-redirect').then((m) => m.ServicesRedirect),
+        loadComponent: () => import('./ui/landing-redirect').then((m) => m.LandingRedirect),
+        data: {
+          landingPath: '/system/swarm/services',
+          moved: 'The swarm services moved to the landing app.',
+        } satisfies LandingRedirectData,
       },
       {
         path: 'swarm/services/:id',

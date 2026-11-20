@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { QitsAppLinks } from '@qits/ui-components';
-import { NAVIGATE_AWAY } from '../ui/navigate-away';
+import { NAVIGATE_AWAY } from './navigate-away';
 
 /**
  * How long this page waits for the navigation to name `qits-landing`'s origin before giving up on
@@ -33,29 +34,39 @@ async function landingOrigin(links: QitsAppLinks): Promise<string> {
   return Promise.race([settled, bound]);
 }
 
-/** The landing app's own path for this page's one address. */
-const LANDING_PATH = '/system/swarm/services';
+/**
+ * What a route mounting {@link LandingRedirect} must say in its own `data`: where the landing app
+ * answers for this address, and the sentence telling a reader that is where their page went.
+ */
+export interface LandingRedirectData {
+  /** The landing app's own path for this page's one address, e.g. `/system/swarm/services`. */
+  readonly landingPath: string;
+  /** The sentence shown while the hand-off is still in flight, e.g. `The swarm services moved to
+   * the landing app.` */
+  readonly moved: string;
+}
 
 /**
- * `swarm/services` — the swarm-wide service listing moved to the landing app (qits-2344), at
- * `<landing origin>/system/swarm/services`. `swarm/services/:id`, a single service's own page,
- * stayed here and is untouched.
+ * The hand-off for every System page that moved to the landing app — `swarm/services` first
+ * (qits-2344), `swarm/nodes` next (qits-2346), and later siblings (qits-2345, qits-2347, …) as they
+ * move too. Each mounting route says where it goes and what to tell the reader through its own
+ * `data`, typed by {@link LandingRedirectData}.
  *
- * This draws almost nothing of its own: a message naming where the page went, with a link to it,
- * for as long as the hand-off itself is still in flight — and the hand-off is what actually sends
- * a reader there, through {@link NAVIGATE_AWAY} rather than the router, because the destination is
- * a different Angular application and a `routerLink` would compile and go nowhere.
+ * This draws almost nothing of its own: the route's own sentence naming where the page went, with
+ * a link to it, for as long as the hand-off itself is still in flight — and the hand-off is what
+ * actually sends a reader there, through {@link NAVIGATE_AWAY} rather than the router, because the
+ * destination is a different Angular application and a `routerLink` would compile and go nowhere.
  *
  * Copied from qits-artifacts-frontend's `RepositoryRedirect` and qits-events-frontend's
  * `ProjectRedirect`/`EventRedirect` (qits-2338), the same shape of hand-off for their own moved
  * pages.
  */
 @Component({
-  selector: 'app-services-redirect',
+  selector: 'app-landing-redirect',
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <p>
-      The swarm services moved to the landing app.
+      {{ moved() }}
       @if (href(); as url) {
         <a [href]="url">{{ url }}</a>
       } @else {
@@ -64,15 +75,20 @@ const LANDING_PATH = '/system/swarm/services';
     </p>
   `,
 })
-export class ServicesRedirect {
+export class LandingRedirect {
+  /** The sentence this route's `data` named, naming the page that moved. */
+  protected readonly moved = signal('');
+
   /** The landing app's address for this page, once an origin for it is known. */
   protected readonly href = signal<string | undefined>(undefined);
 
   constructor() {
     const links = inject(QitsAppLinks);
     const navigateAway = inject(NAVIGATE_AWAY);
+    const data = inject(ActivatedRoute).snapshot.data as LandingRedirectData;
+    this.moved.set(data.moved);
     void landingOrigin(links).then((origin) => {
-      const url = `${origin.replace(/\/+$/, '')}${LANDING_PATH}`;
+      const url = `${origin.replace(/\/+$/, '')}${data.landingPath}`;
       this.href.set(url);
       navigateAway(url);
     });

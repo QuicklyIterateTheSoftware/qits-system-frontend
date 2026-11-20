@@ -15,7 +15,6 @@ import {
   type LeaseDto,
   type NetworkSummaryDto,
   type NodeDetailDto,
-  type NodeSummaryDto,
   type OverviewDto,
   type PatchTargetDto,
   type RotateTargetRegistrationTokenDto,
@@ -60,11 +59,6 @@ export class SystemApi {
   /** The host, its disk and the swarm, in one call — what the overview's header line is made of. */
   overview(): Promise<OverviewDto> {
     return firstValueFrom(this.http.get<OverviewDto>(`${this.base}/system/api/overview`));
-  }
-
-  /** Every node in the swarm. Cluster-wide: this read is answered by the manager. */
-  nodes(): Promise<readonly NodeSummaryDto[]> {
-    return firstValueFrom(this.http.get<NodeSummaryDto[]>(`${this.base}/system/api/swarm/nodes`));
   }
 
   node(id: string): Promise<NodeDetailDto> {
