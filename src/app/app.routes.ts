@@ -82,7 +82,7 @@ export const routes: Routes = [
       {
         path: 'swarm/services',
         pathMatch: 'full',
-        loadComponent: () => import('./swarm/services-page').then((m) => m.ServicesPage),
+        loadComponent: () => import('./swarm/services-redirect').then((m) => m.ServicesRedirect),
       },
       {
         path: 'swarm/services/:id',

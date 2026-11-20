@@ -93,13 +93,6 @@ describe('App', () => {
       (harness.routeNativeElement as HTMLElement).querySelector('main app-nodes-page'),
     ).not.toBeNull();
 
-    await harness.navigateByUrl('/swarm/services');
-    http.expectOne('/system/api/swarm/services').flush([]);
-    await harness.fixture.whenStable();
-    expect(
-      (harness.routeNativeElement as HTMLElement).querySelector('main app-services-page'),
-    ).not.toBeNull();
-
     await harness.navigateByUrl('/swarm/configs');
     http.expectOne('/system/api/swarm/configs').flush([]);
     await harness.fixture.whenStable();
