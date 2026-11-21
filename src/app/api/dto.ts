@@ -103,25 +103,6 @@ export interface ServiceSummaryDto {
   readonly updatedAt?: string | null;
 }
 
-/** One task of a service: where it was placed, and how that went. */
-export interface TaskDto {
-  readonly id: string;
-  readonly slot?: number | null;
-  readonly nodeId?: string | null;
-  readonly nodeHostname?: string | null;
-  readonly state: string;
-  readonly desiredState: string;
-  readonly error?: string | null;
-  readonly updatedAt?: string | null;
-}
-
-/** One service with its spec and every task swarm has placed for it. */
-export interface ServiceDetailDto extends ServiceSummaryDto {
-  readonly createdAt?: string | null;
-  readonly labels?: Readonly<Record<string, string>> | null;
-  readonly tasks: readonly TaskDto[];
-}
-
 /** A row of `docker config ls` — and, for a secret, of `docker secret ls`. */
 export interface ConfigSummaryDto {
   readonly id: string;

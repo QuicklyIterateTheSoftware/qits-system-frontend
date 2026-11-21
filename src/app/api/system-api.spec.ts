@@ -56,9 +56,6 @@ describe('SystemApi', () => {
   });
 
   it('reads one swarm object by id, encoded', async () => {
-    void api.service('qits/platform idp');
-    http.expectOne('/system/api/swarm/services/qits%2Fplatform%20idp').flush({ tasks: [] });
-
     void api.config('c1');
     http.expectOne('/system/api/swarm/configs/c1').flush({ id: 'c1', name: 'c', data: '' });
 

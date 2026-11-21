@@ -21,7 +21,6 @@ import {
   type SecretSummaryDto,
   type SignInHarness,
   type StartTargetSignInDto,
-  type ServiceDetailDto,
   type ServiceSummaryDto,
   type TargetDto,
   type TargetHealthReportDto,
@@ -69,11 +68,6 @@ export class SystemApi {
     return firstValueFrom(
       this.http.get<ServiceSummaryDto[]>(`${this.base}/system/api/swarm/services`),
     );
-  }
-
-  /** One service with its tasks — where swarm placed each replica, and how that went. */
-  service(id: string): Promise<ServiceDetailDto> {
-    return firstValueFrom(this.http.get<ServiceDetailDto>(this.swarmUrl('services', id)));
   }
 
   configs(): Promise<readonly ConfigSummaryDto[]> {

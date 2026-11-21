@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, type ActivatedRouteSnapshot } from '@angular/router';
 import { QitsAppLinks } from '@qits/ui-components';
 import { NAVIGATE_AWAY } from './navigate-away';
 
@@ -39,18 +39,31 @@ async function landingOrigin(links: QitsAppLinks): Promise<string> {
  * answers for this address, and the sentence telling a reader that is where their page went.
  */
 export interface LandingRedirectData {
-  /** The landing app's own path for this page's one address, e.g. `/system/swarm/services`. */
+  /**
+   * The landing app's own path for this page's one address, e.g. `/system/swarm/services`. May
+   * carry a literal `:id` segment, for a route whose own path matches one too (e.g.
+   * `swarm/services/:id`) — it is replaced with that route's matched `id` param, percent-encoded,
+   * because a reader's id can hold anything a path segment cannot.
+   */
   readonly landingPath: string;
   /** The sentence shown while the hand-off is still in flight, e.g. `The swarm services moved to
    * the landing app.` */
   readonly moved: string;
 }
 
+/** {@link LandingRedirectData.landingPath}, with any `:id` filled from the matched route. */
+function resolveLandingPath(landingPath: string, snapshot: ActivatedRouteSnapshot): string {
+  if (!landingPath.includes(':id')) {
+    return landingPath;
+  }
+  return landingPath.replace(':id', encodeURIComponent(snapshot.paramMap.get('id') ?? ''));
+}
+
 /**
  * The hand-off for every System page that moved to the landing app — `swarm/services` first
- * (qits-2344), `swarm/nodes` next (qits-2346), and later siblings (qits-2345, qits-2347, …) as they
- * move too. Each mounting route says where it goes and what to tell the reader through its own
- * `data`, typed by {@link LandingRedirectData}.
+ * (qits-2344), `swarm/nodes` next (qits-2346), `swarm/services/:id` next (qits-2345), and later
+ * siblings (qits-2347, …) as they move too. Each mounting route says where it goes and what to tell
+ * the reader through its own `data`, typed by {@link LandingRedirectData}.
  *
  * This draws almost nothing of its own: the route's own sentence naming where the page went, with
  * a link to it, for as long as the hand-off itself is still in flight — and the hand-off is what
@@ -85,10 +98,12 @@ export class LandingRedirect {
   constructor() {
     const links = inject(QitsAppLinks);
     const navigateAway = inject(NAVIGATE_AWAY);
-    const data = inject(ActivatedRoute).snapshot.data as LandingRedirectData;
+    const snapshot = inject(ActivatedRoute).snapshot;
+    const data = snapshot.data as LandingRedirectData;
     this.moved.set(data.moved);
+    const path = resolveLandingPath(data.landingPath, snapshot);
     void landingOrigin(links).then((origin) => {
-      const url = `${origin.replace(/\/+$/, '')}${data.landingPath}`;
+      const url = `${origin.replace(/\/+$/, '')}${path}`;
       this.href.set(url);
       navigateAway(url);
     });

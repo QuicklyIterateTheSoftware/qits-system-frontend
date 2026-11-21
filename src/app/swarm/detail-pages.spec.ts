@@ -9,10 +9,10 @@ import { routes } from '../app.routes';
 import { settle as settleFixture } from '../testing/settle';
 
 /**
- * The three detail pages: a node's facts, a service's tasks, and a config's contents.
+ * The two detail pages left here: a node's facts, and a config's contents. A service's own page
+ * moved to the landing app (qits-2345); `landing-redirect.spec.ts` covers its hand-off.
  *
- * The assertions worth having are the ones a copied page loses: a service that says `0/1` must show
- * the task that explains why, including the shut-down ones; and a config must draw its data as the
+ * The assertion worth having is the one a copied page loses: a config must draw its data as the
  * bytes it is, unformatted.
  */
 describe('the detail pages', () => {
@@ -70,63 +70,6 @@ describe('the detail pages', () => {
       );
       expect(tabs).toEqual(['Containers', 'Images', 'Volumes', 'Networks']);
       expect(page.querySelector('.tabs a.current')?.textContent?.trim()).toBe('Images');
-    });
-  });
-
-  describe('a service', () => {
-    /** A replica count says nothing about why. The task is where the answer always is. */
-    it('draws every task, shut-down ones included, with the error that explains a failure', async () => {
-      const page = await open('/swarm/services/s1');
-      http.expectOne('/system/api/swarm/services/s1').flush({
-        id: 's1',
-        name: 'qits-platform-idp',
-        mode: 'replicated',
-        replicas: '0/1',
-        image: 'qits/platform-idp:2026.822.1',
-        tasks: [
-          {
-            id: 'k1',
-            slot: 1,
-            nodeId: 'n1',
-            nodeHostname: 'wohlben',
-            state: 'Failed',
-            desiredState: 'Shutdown',
-            error: 'task: non-zero exit (1)',
-            updatedAt: '2026-08-23T11:00:00Z',
-          },
-          {
-            id: 'k2',
-            slot: 1,
-            nodeId: 'n1',
-            nodeHostname: 'wohlben',
-            state: 'Shutdown',
-            desiredState: 'Shutdown',
-            error: null,
-          },
-        ],
-      });
-      await settle();
-
-      expect(page.querySelectorAll('tbody tr')).toHaveLength(2);
-      expect(text(page)).toContain('task: non-zero exit (1)');
-      expect(text(page)).toContain('2 tasks');
-      expect(text(page)).toContain('0/1');
-    });
-
-    /** A replicated service with no task at all is a scheduling problem, and must not read as calm. */
-    it('says so when swarm has placed no task', async () => {
-      const page = await open('/swarm/services/s2');
-      http.expectOne('/system/api/swarm/services/s2').flush({
-        id: 's2',
-        name: 'qits-dns',
-        mode: 'replicated',
-        replicas: '0/1',
-        image: 'qits/dns:1',
-        tasks: [],
-      });
-      await settle();
-
-      expect(text(page)).toContain('Swarm has placed no task for this service');
     });
   });
 
