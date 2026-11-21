@@ -44,9 +44,10 @@ describe('App', () => {
         provideHttpClientTesting(),
         provideQitsNavigationLinks(NAV),
         { provide: WEB_SOCKET_FACTORY, useValue: sockets.open },
-        // The hand-off at `/swarm/nodes`, `/swarm/configs` and `/swarm/secrets` fires this the moment it mounts;
-        // nothing here tests where it goes — `landing-redirect.spec.ts` does — so this keeps it
-        // from ever reaching jsdom's unimplemented real navigation.
+        // The hand-off at `/swarm/nodes`, `/swarm/nodes/:id`, `/swarm/configs` and `/swarm/secrets`
+        // fires this the moment it mounts; nothing here tests where it goes —
+        // `landing-redirect.spec.ts` does — so this keeps it from ever reaching jsdom's
+        // unimplemented real navigation.
         { provide: NAVIGATE_AWAY, useValue: () => undefined },
       ],
     });
@@ -112,9 +113,21 @@ describe('App', () => {
     http.verify();
   });
 
-  /** The bare node path is not a page: it redirects to the list a node is opened for. */
-  it('redirects a bare node path to its containers tab', async () => {
+  /**
+   * The bare node path hands off to the landing app now (qits-2347) — `landing-redirect.spec.ts`
+   * covers where it goes and the id encoding. Its four tab children stay on `NodePage` here.
+   */
+  it('hands the bare node path off to the landing app', async () => {
     const harness = await RouterTestingHarness.create('/swarm/nodes/n1');
+    await harness.fixture.whenStable();
+    expect(
+      (harness.routeNativeElement as HTMLElement).querySelector('main app-landing-redirect'),
+    ).not.toBeNull();
+    http.verify();
+  });
+
+  it('still renders the containers tab on NodePage at the tab child route', async () => {
+    const harness = await RouterTestingHarness.create('/swarm/nodes/n1/containers');
     http.expectOne('/system/api/swarm/nodes/n1').flush({
       id: 'n1',
       hostname: 'wohlben',
