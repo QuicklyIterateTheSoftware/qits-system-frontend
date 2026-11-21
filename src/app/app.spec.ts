@@ -116,8 +116,9 @@ describe('App', () => {
 
   /**
    * The bare node path hands off to the landing app now (qits-2347) — `landing-redirect.spec.ts`
-   * covers where it goes and the id encoding. Its remaining three tab children stay on
-   * `NodePage` here; the fourth, `images`, hands off too (qits-2353).
+   * covers where it goes and the id encoding. Of its tab children, `images` (qits-2353) and
+   * `networks` (qits-2354) hand off too, also covered there; the remaining two, Containers and
+   * Volumes, stay on `NodePage` here.
    */
   it('hands the bare node path off to the landing app', async () => {
     const harness = await RouterTestingHarness.create('/swarm/nodes/n1');
@@ -130,6 +131,22 @@ describe('App', () => {
 
   it('hands the images tab off to the landing app too', async () => {
     const harness = await RouterTestingHarness.create('/swarm/nodes/n1/images');
+    http.expectOne('/system/api/swarm/nodes/n1').flush({
+      id: 'n1',
+      hostname: 'wohlben',
+      role: 'manager',
+      availability: 'Active',
+      status: 'Ready',
+    });
+    await harness.fixture.whenStable();
+    expect(
+      (harness.routeNativeElement as HTMLElement).querySelector('main app-landing-redirect'),
+    ).not.toBeNull();
+    http.verify();
+  });
+
+  it('hands the networks tab off to the landing app too', async () => {
+    const harness = await RouterTestingHarness.create('/swarm/nodes/n1/networks');
     http.expectOne('/system/api/swarm/nodes/n1').flush({
       id: 'n1',
       hostname: 'wohlben',

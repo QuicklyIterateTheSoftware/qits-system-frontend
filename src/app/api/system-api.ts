@@ -7,7 +7,6 @@ import {
   type ContainerLogsDto,
   type ContainerSummaryDto,
   type CreateTerminalDto,
-  type NetworkSummaryDto,
   type NodeDetailDto,
   type OverviewDto,
   type ServiceSummaryDto,
@@ -81,10 +80,6 @@ export class SystemApi {
 
   volumes(nodeId: string): Promise<readonly VolumeSummaryDto[]> {
     return firstValueFrom(this.http.get<VolumeSummaryDto[]>(`${this.nodeUrl(nodeId)}/volumes`));
-  }
-
-  networks(nodeId: string): Promise<readonly NetworkSummaryDto[]> {
-    return firstValueFrom(this.http.get<NetworkSummaryDto[]>(`${this.nodeUrl(nodeId)}/networks`));
   }
 
   /**
