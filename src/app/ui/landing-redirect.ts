@@ -61,9 +61,9 @@ function resolveLandingPath(landingPath: string, snapshot: ActivatedRouteSnapsho
 
 /**
  * The hand-off for every System page that moved to the landing app — `swarm/services` first
- * (qits-2344), `swarm/nodes` next (qits-2346), `swarm/services/:id` next (qits-2345), and later
- * siblings (qits-2347, …) as they move too. Each mounting route says where it goes and what to tell
- * the reader through its own `data`, typed by {@link LandingRedirectData}.
+ * (qits-2344), `swarm/nodes` next (qits-2346), `swarm/services/:id` next (qits-2345), `targets` next
+ * (qits-2351), and later siblings as they move too. Each mounting route says where it goes and what
+ * to tell the reader through its own `data`, typed by {@link LandingRedirectData}.
  *
  * This draws almost nothing of its own: the route's own sentence naming where the page went, with
  * a link to it, for as long as the hand-off itself is still in flight — and the hand-off is what

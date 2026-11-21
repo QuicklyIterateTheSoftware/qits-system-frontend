@@ -15,10 +15,10 @@ import type { LandingRedirectData } from './ui/landing-redirect';
  * **The path shape repeats the API's, noun for noun.** `/swarm/nodes/<id>/containers` is the page
  * for what `GET /system/api/nodes/<id>/containers` answers.
  *
- * **`swarm/nodes`, `swarm/services` and `swarm/services/:id` hand off to the landing app** —
- * qits-2346, qits-2344 and qits-2345 in that order — each mounting {@link LandingRedirect} with its
- * own `data`, typed by {@link LandingRedirectData}; `swarm/nodes/:id`, a single node's own page,
- * stayed here and is untouched.
+ * **`swarm/nodes`, `swarm/services`, `swarm/services/:id` and `targets` hand off to the landing
+ * app** — qits-2346, qits-2344, qits-2345 and qits-2351 in that order — each mounting
+ * {@link LandingRedirect} with its own `data`, typed by {@link LandingRedirectData}; `swarm/nodes/:id`,
+ * a single node's own page, stayed here and is untouched.
  *
  * **Every address here starts at the root**, because this application is served at `/` on its own
  * host. It is a `system` app: what it shows is the machine the whole platform runs on, which belongs
@@ -54,7 +54,11 @@ export const routes: Routes = [
       {
         path: 'targets',
         pathMatch: 'full',
-        loadComponent: () => import('./targets/targets-page').then((m) => m.TargetsPage),
+        loadComponent: () => import('./ui/landing-redirect').then((m) => m.LandingRedirect),
+        data: {
+          landingPath: '/system/targets',
+          moved: 'The targets moved to the landing app.',
+        } satisfies LandingRedirectData,
       },
       {
         path: 'swarm/nodes',

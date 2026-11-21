@@ -8,25 +8,13 @@ import {
   type ConfigSummaryDto,
   type ContainerLogsDto,
   type ContainerSummaryDto,
-  type CreateTargetDto,
   type CreateTerminalDto,
-  type HealthCheckRequestedDto,
   type ImageSummaryDto,
-  type LeaseDto,
   type NetworkSummaryDto,
   type NodeDetailDto,
   type OverviewDto,
-  type PatchTargetDto,
-  type RotateTargetRegistrationTokenDto,
   type SecretSummaryDto,
-  type SignInHarness,
-  type StartTargetSignInDto,
   type ServiceSummaryDto,
-  type TargetDto,
-  type TargetHealthReportDto,
-  type TargetRegistrationDto,
-  type TargetSignInCodeDto,
-  type TargetSignInDto,
   type TerminalDto,
   type TerminalShell,
   type VolumeSummaryDto,
@@ -179,146 +167,6 @@ export class SystemApi {
     return firstValueFrom(this.http.post<TerminalDto>(`${this.base}/system/api/terminals`, body));
   }
 
-  // --- targets (epic qits-1481) -------------------------------------------------------------
-
-  /** Every target, by name. */
-  targets(): Promise<readonly TargetDto[]> {
-    return firstValueFrom(this.http.get<TargetDto[]>(`${this.base}/system/api/targets`));
-  }
-
-  target(id: string): Promise<TargetDto> {
-    return firstValueFrom(this.http.get<TargetDto>(this.targetUrl(id)));
-  }
-
-  /** Declares a target; answers its install line and registration token, once. */
-  createTarget(body: CreateTargetDto): Promise<TargetRegistrationDto> {
-    return firstValueFrom(
-      this.http.post<TargetRegistrationDto>(`${this.base}/system/api/targets`, body),
-    );
-  }
-
-  /** Changes a target's description or reservations. 409 `RESERVATIONS_EXCEED_TOTAL` when their sum is
-   * above the total the runner last reported. */
-  patchTarget(id: string, body: PatchTargetDto): Promise<TargetDto> {
-    return firstValueFrom(this.http.patch<TargetDto>(this.targetUrl(id), body));
-  }
-
-  /**
-   * Decommissions a target. 409 `TARGET_BUSY` while it holds a lease that has not ended. The 204's
-   * empty body is discarded — `HttpClient` hands it over as `null` — so this resolves `undefined`,
-   * as qits-projects-frontend's `ProjectsApi.deleteWork` does.
-   */
-  async deleteTarget(id: string): Promise<void> {
-    await firstValueFrom(this.http.delete<unknown>(this.targetUrl(id)));
-  }
-
-  /**
-   * Replaces a target's registration token; answers a new one-time install line. Works on a
-   * registered target too: pasting the new line reinstalls its runner under the same target id,
-   * and the old runner's client is decommissioned once the new one registers.
-   *
-   * `slots` resets the install line's `QITS_SYSTEM_RUNNER_SLOTS` the way {@link createTarget}'s
-   * does. Left undefined, no body is sent at all — byte-identical to a plain rotate — so a caller
-   * that never passes it keeps today's request exactly.
-   */
-  rotateTargetRegistrationToken(id: string, slots?: number): Promise<TargetRegistrationDto> {
-    const body: RotateTargetRegistrationTokenDto | null = slots === undefined ? null : { slots };
-    return firstValueFrom(
-      this.http.post<TargetRegistrationDto>(`${this.targetUrl(id)}/registration-token`, body),
-    );
-  }
-
-  /** Lifts a target's quarantine. */
-  greenlightTarget(id: string): Promise<TargetDto> {
-    return firstValueFrom(this.http.post<TargetDto>(`${this.targetUrl(id)}/greenlight`, {}));
-  }
-
-  /** Asks a connected target for a health check. 409 `TARGET_UNAVAILABLE` when it is not
-   * connected. The answer is only an acknowledgement; read {@link targetHealth} once it settles. */
-  requestTargetHealthCheck(id: string): Promise<HealthCheckRequestedDto> {
-    return firstValueFrom(
-      this.http.post<HealthCheckRequestedDto>(`${this.targetUrl(id)}/healthcheck`, {}),
-    );
-  }
-
-  /** Asks a connected target to probe its sign-in now. 409 `TARGET_UNAVAILABLE` when it is not
-   * connected. */
-  requestTargetLoginCheck(id: string): Promise<void> {
-    return firstValueFrom(this.http.post<void>(`${this.targetUrl(id)}/login-check`, {}));
-  }
-
-  /**
-   * A target's newest settled health check, or `null` when none has settled yet.
-   *
-   * The service answers 204 for "nothing yet", which carries no body for `HttpClient` to parse —
-   * `observe: 'response'` is what lets this read the status without `HttpClient` trying anyway.
-   */
-  async targetHealth(id: string): Promise<TargetHealthReportDto | null> {
-    const response = await firstValueFrom(
-      this.http.get<TargetHealthReportDto>(`${this.targetUrl(id)}/health`, {
-        observe: 'response',
-      }),
-    );
-    return response.status === 204 ? null : response.body;
-  }
-
-  /**
-   * The generic install script the install line pipes to `sh` — carries no secret, so it is safe
-   * to show an operator who wants to read it before pasting the line that pipes it in.
-   */
-  targetInstallScript(): Promise<string> {
-    return firstValueFrom(
-      this.http.get(`${this.base}/system/api/targets/install.sh`, { responseType: 'text' }),
-    );
-  }
-
-  /**
-   * Signs a connected target in to `harness` (qits-1593): its runner runs the harness's own login
-   * and relays the URL and code it prints. Answers 202 with the sign-in, `STARTING`; poll
-   * {@link targetSignIn} from there. 409 `TARGET_UNAVAILABLE` when the target is not connected,
-   * 409 `SIGN_IN_RUNNING` while one for that harness has not settled.
-   */
-  startTargetSignIn(id: string, harness: SignInHarness): Promise<TargetSignInDto> {
-    const body: StartTargetSignInDto = { harness };
-    return firstValueFrom(this.http.post<TargetSignInDto>(`${this.targetUrl(id)}/sign-ins`, body));
-  }
-
-  /** One sign-in, while it runs and ~15 minutes after it settles. 404 `SIGN_IN_NOT_FOUND` after. */
-  targetSignIn(id: string, signInId: string): Promise<TargetSignInDto> {
-    return firstValueFrom(this.http.get<TargetSignInDto>(this.signInUrl(id, signInId)));
-  }
-
-  /** Hands an `AWAITING_CODE` sign-in the code the browser showed. 409
-   * `SIGN_IN_NOT_AWAITING_CODE` in any other state. */
-  submitTargetSignInCode(id: string, signInId: string, code: string): Promise<TargetSignInDto> {
-    const body: TargetSignInCodeDto = { code };
-    return firstValueFrom(
-      this.http.post<TargetSignInDto>(`${this.signInUrl(id, signInId)}/code`, body),
-    );
-  }
-
-  /** Stops a sign-in; answers it `CANCELLED`, or as it settled when it already had. */
-  cancelTargetSignIn(id: string, signInId: string): Promise<TargetSignInDto> {
-    return firstValueFrom(this.http.delete<TargetSignInDto>(this.signInUrl(id, signInId)));
-  }
-
-  /** The leases of one target — type, owner, state and detail. */
-  targetLeases(targetId: string): Promise<readonly LeaseDto[]> {
-    return firstValueFrom(
-      this.http.get<LeaseDto[]>(`${this.base}/system/api/leases`, {
-        params: new HttpParams().set('targetId', targetId),
-      }),
-    );
-  }
-
-  private targetUrl(id: string): string {
-    return `${this.base}/system/api/targets/${encodeURIComponent(id)}`;
-  }
-
-  private signInUrl(id: string, signInId: string): string {
-    return `${this.targetUrl(id)}/sign-ins/${encodeURIComponent(signInId)}`;
-  }
-
   private swarmUrl(kind: string, id: string): string {
     return `${this.base}/system/api/swarm/${kind}/${encodeURIComponent(id)}`;
   }
@@ -347,23 +195,4 @@ export function isNodeRemote(error: unknown): boolean {
     error.error !== null &&
     (error.error as { code?: unknown }).code === NODE_REMOTE
   );
-}
-
-/**
- * The `code` of a failed write's `{"message": …, "code": …}` body, when it carries one.
- *
- * The targets doors answer several named codes on the one status (409 alone carries
- * `RESERVATIONS_EXCEED_TOTAL`, `TARGET_BUSY` and `TARGET_UNAVAILABLE`), so a caller that must read one
- * apart from the others asks this rather than growing a fourth `isXxx` beside {@link isNodeRemote}.
- */
-export function errorCode(error: unknown): string | undefined {
-  if (
-    !(error instanceof HttpErrorResponse) ||
-    typeof error.error !== 'object' ||
-    error.error === null
-  ) {
-    return undefined;
-  }
-  const code = (error.error as { code?: unknown }).code;
-  return typeof code === 'string' ? code : undefined;
 }
