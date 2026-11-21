@@ -8,7 +8,6 @@ import {
   type ContainerLogsDto,
   type ContainerSummaryDto,
   type CreateTerminalDto,
-  type ImageSummaryDto,
   type NetworkSummaryDto,
   type NodeDetailDto,
   type OverviewDto,
@@ -84,10 +83,6 @@ export class SystemApi {
         { params: new HttpParams().set('tail', tail) },
       ),
     );
-  }
-
-  images(nodeId: string): Promise<readonly ImageSummaryDto[]> {
-    return firstValueFrom(this.http.get<ImageSummaryDto[]>(`${this.nodeUrl(nodeId)}/images`));
   }
 
   volumes(nodeId: string): Promise<readonly VolumeSummaryDto[]> {

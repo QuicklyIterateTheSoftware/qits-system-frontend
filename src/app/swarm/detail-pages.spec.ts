@@ -47,7 +47,7 @@ describe('the detail pages', () => {
 
   describe('a node', () => {
     it('draws its facts and offers the four resource tabs', async () => {
-      const page = await open('/swarm/nodes/n1/images');
+      const page = await open('/swarm/nodes/n1/containers');
       http.expectOne('/system/api/swarm/nodes/n1').flush({
         id: 'n1',
         hostname: 'wohlben',
@@ -59,7 +59,7 @@ describe('the detail pages', () => {
         memoryBytes: 16_000_000_000,
         labels: { tier: 'platform' },
       });
-      http.expectOne('/system/api/nodes/n1/images').flush([]);
+      http.expectOne((candidate) => candidate.url === '/system/api/nodes/n1/containers').flush([]);
       await settle();
 
       expect(text(page)).toContain('wohlben');
@@ -69,7 +69,7 @@ describe('the detail pages', () => {
         link.textContent?.trim(),
       );
       expect(tabs).toEqual(['Containers', 'Images', 'Volumes', 'Networks']);
-      expect(page.querySelector('.tabs a.current')?.textContent?.trim()).toBe('Images');
+      expect(page.querySelector('.tabs a.current')?.textContent?.trim()).toBe('Containers');
     });
   });
 

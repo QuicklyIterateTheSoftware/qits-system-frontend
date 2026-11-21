@@ -51,19 +51,35 @@ export interface LandingRedirectData {
   readonly moved: string;
 }
 
+/**
+ * The matched route's `id` param, read off `snapshot` itself or, failing that, its nearest
+ * ancestor that has one — the same lookup the node resource tabs do for the node id, needed here
+ * too because `swarm/nodes/:id/images` mounts this page as a child of `:id` rather than at the
+ * segment that carries it.
+ */
+function findIdParam(snapshot: ActivatedRouteSnapshot): string {
+  for (let route: ActivatedRouteSnapshot | null = snapshot; route; route = route.parent) {
+    const id = route.paramMap.get('id');
+    if (id !== null) {
+      return id;
+    }
+  }
+  return '';
+}
+
 /** {@link LandingRedirectData.landingPath}, with any `:id` filled from the matched route. */
 function resolveLandingPath(landingPath: string, snapshot: ActivatedRouteSnapshot): string {
   if (!landingPath.includes(':id')) {
     return landingPath;
   }
-  return landingPath.replace(':id', encodeURIComponent(snapshot.paramMap.get('id') ?? ''));
+  return landingPath.replace(':id', encodeURIComponent(findIdParam(snapshot)));
 }
 
 /**
  * The hand-off for every System page that moved to the landing app — `swarm/services` first
  * (qits-2344), `swarm/nodes` next (qits-2346), `swarm/nodes/:id` next (qits-2347),
  * `swarm/services/:id` next (qits-2345), `swarm/configs` next (qits-2348), `targets` next
- * (qits-2351), and later siblings as they move too.
+ * (qits-2351), `swarm/nodes/:id/images` next (qits-2353), and later siblings as they move too.
  * Each mounting route says where it goes and what to tell the reader through its own `data`, typed
  * by {@link LandingRedirectData}.
  *

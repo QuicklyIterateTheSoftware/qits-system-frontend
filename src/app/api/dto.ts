@@ -133,15 +133,6 @@ export interface ContainerSummaryDto {
   readonly ports?: string | null;
 }
 
-/** A row of `docker image ls`. */
-export interface ImageSummaryDto {
-  readonly id: string;
-  readonly repository: string;
-  readonly tag: string;
-  readonly createdAt?: string | null;
-  readonly sizeBytes?: number | null;
-}
-
 /** A row of `docker volume ls`. */
 export interface VolumeSummaryDto {
   readonly name: string;

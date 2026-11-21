@@ -78,10 +78,7 @@ describe('SystemApi', () => {
     request.flush({ text: '', truncated: false });
   });
 
-  it('reads the other three node resources at their own paths', async () => {
-    void api.images('n1');
-    http.expectOne('/system/api/nodes/n1/images').flush([]);
-
+  it('reads the other two node resources at their own paths', async () => {
     void api.volumes('n1');
     http.expectOne('/system/api/nodes/n1/volumes').flush([]);
 
