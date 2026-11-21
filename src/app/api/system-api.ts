@@ -4,7 +4,6 @@ import { firstValueFrom } from 'rxjs';
 import { QITS_API_BASE } from './api-base';
 import {
   NODE_REMOTE,
-  type ConfigDetailDto,
   type ContainerLogsDto,
   type ContainerSummaryDto,
   type CreateTerminalDto,
@@ -54,11 +53,6 @@ export class SystemApi {
     return firstValueFrom(
       this.http.get<ServiceSummaryDto[]>(`${this.base}/system/api/swarm/services`),
     );
-  }
-
-  /** One config with its contents. The service base64-decodes; this app renders the text as it is. */
-  config(id: string): Promise<ConfigDetailDto> {
-    return firstValueFrom(this.http.get<ConfigDetailDto>(this.swarmUrl('configs', id)));
   }
 
   /**

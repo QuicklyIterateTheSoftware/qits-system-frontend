@@ -49,9 +49,6 @@ describe('SystemApi', () => {
   });
 
   it('reads one swarm object by id, encoded', async () => {
-    void api.config('c1');
-    http.expectOne('/system/api/swarm/configs/c1').flush({ id: 'c1', name: 'c', data: '' });
-
     void api.node('n1');
     http.expectOne('/system/api/swarm/nodes/n1').flush({ id: 'n1' });
   });
