@@ -103,25 +103,6 @@ export interface ServiceSummaryDto {
   readonly updatedAt?: string | null;
 }
 
-/** A row of `docker config ls`. */
-export interface ConfigSummaryDto {
-  readonly id: string;
-  readonly name: string;
-  readonly createdAt?: string | null;
-  readonly updatedAt?: string | null;
-  readonly labels?: Readonly<Record<string, string>> | null;
-}
-
-/**
- * One config with its contents, base64-decoded by the service.
- *
- * There is no secret equivalent and there will not be one: swarm does not hand a secret's value
- * back.
- */
-export interface ConfigDetailDto extends ConfigSummaryDto {
-  readonly data: string;
-}
-
 /** A row of `docker ps -a` on one node. */
 export interface ContainerSummaryDto {
   readonly id: string;

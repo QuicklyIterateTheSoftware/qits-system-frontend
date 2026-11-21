@@ -19,9 +19,9 @@ const LANDING_ORIGIN = 'https://landing.qits.example';
 /**
  * The hand-off every moved System page mounts — `swarm/services` (qits-2344), `swarm/nodes`
  * (qits-2346), `swarm/nodes/:id` (qits-2347), `swarm/services/:id` (qits-2345), `swarm/configs`
- * (qits-2348), `swarm/secrets` (qits-2350), `targets` (qits-2351) and `swarm/nodes/:id/images`
- * (qits-2353) so far — the point of this group is that the hand-off actually happens through real
- * routing, rather than a stubbed `ActivatedRoute` — `app.spec.ts`
+ * (qits-2348), `swarm/configs/:id` (qits-2349), `swarm/secrets` (qits-2350), `targets` (qits-2351)
+ * and `swarm/nodes/:id/images` (qits-2353) so far — the point of this group is that the hand-off
+ * actually happens through real routing, rather than a stubbed `ActivatedRoute` — `app.spec.ts`
  * never instantiates this page either, so this is the only place reaching one of these addresses
  * through the real route table would show a wrong destination.
  */
@@ -92,6 +92,13 @@ describe('LandingRedirect', () => {
       expect(navigateAway).toHaveBeenCalledWith(
         `${LANDING_ORIGIN}/system/swarm/nodes/dev%20x/images`,
       );
+    });
+
+    /** The id rides through `:id` in `landingPath`, percent-encoded — not copied from the URL as-is. */
+    it('hands one swarm config off to the landing app, with its id encoded', async () => {
+      await harness.navigateByUrl('/swarm/configs/dev%20x');
+      await vi.waitFor(() => expect(navigateAway).toHaveBeenCalled());
+      expect(navigateAway).toHaveBeenCalledWith(`${LANDING_ORIGIN}/system/swarm/configs/dev%20x`);
     });
 
     it('hands the targets listing off to the landing app', async () => {

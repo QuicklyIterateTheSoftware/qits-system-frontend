@@ -44,7 +44,8 @@ describe('App', () => {
         provideHttpClientTesting(),
         provideQitsNavigationLinks(NAV),
         { provide: WEB_SOCKET_FACTORY, useValue: sockets.open },
-        // The hand-off at `/swarm/nodes`, `/swarm/nodes/:id`, `/swarm/configs` and `/swarm/secrets`
+        // The hand-off at `/swarm/nodes`, `/swarm/nodes/:id`, `/swarm/configs`, `/swarm/configs/:id`
+        // and `/swarm/secrets`
         // fires this the moment it mounts; nothing here tests where it goes —
         // `landing-redirect.spec.ts` does — so this keeps it from ever reaching jsdom's
         // unimplemented real navigation.
