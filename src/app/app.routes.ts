@@ -15,11 +15,11 @@ import type { LandingRedirectData } from './ui/landing-redirect';
  * **The path shape repeats the API's, noun for noun.** `/swarm/nodes/<id>/containers` is the page
  * for what `GET /system/api/nodes/<id>/containers` answers.
  *
- * **`swarm/nodes`, `swarm/nodes/:id`, `swarm/nodes/:id/networks`, `swarm/services`,
- * `swarm/services/:id`, `swarm/configs`, `swarm/configs/:id`, `swarm/secrets` and `targets` hand off
- * to the landing app** — qits-2346, qits-2347, qits-2354, qits-2344, qits-2345, qits-2348, qits-2349,
- * qits-2350 and qits-2351 in that order — each mounting {@link LandingRedirect} with its own `data`,
- * typed by {@link LandingRedirectData}.
+ * **`swarm/nodes`, `swarm/nodes/:id`, `swarm/nodes/:id/images`, `swarm/nodes/:id/networks`,
+ * `swarm/services`, `swarm/services/:id`, `swarm/configs`, `swarm/configs/:id`, `swarm/secrets`
+ * and `targets` hand off to the landing app** — qits-2346, qits-2347, qits-2353, qits-2354,
+ * qits-2344, qits-2345, qits-2348, qits-2349, qits-2350 and qits-2351 in that order — each mounting
+ * {@link LandingRedirect} with its own `data`, typed by {@link LandingRedirectData}.
  *
  * **Every address here starts at the root**, because this application is served at `/` on its own
  * host. It is a `system` app: what it shows is the machine the whole platform runs on, which belongs
@@ -30,9 +30,9 @@ import type { LandingRedirectData } from './ui/landing-redirect';
  * **A node's four resource lists were child routes, not a tab widget.** `…/containers`, `…/images`,
  * `…/volumes` and `…/networks` were each a URL a reader can paste and the back button can return to;
  * a tab held in a signal would leave every one of them as the same address. The bare node path hands
- * off to the landing app's own node page (qits-2347), and so now does `…/networks` (qits-2354), while
- * the three remaining tabs stay here, each still reached through `NodePage` and
- * {@link SystemApi.node}, until qits-2352, qits-2353 and qits-2355 move them too.
+ * off to the landing app's own node page (qits-2347), and so now do `…/images` (qits-2353) and
+ * `…/networks` (qits-2354), while Containers and Volumes stay here, each still reached through
+ * `NodePage` and {@link SystemApi.node}, until qits-2352 and qits-2355 move them too.
  *
  * **A terminal is addressed by its own id and nothing else.** It outlives the page that opened it —
  * a reader can reload, or send the link to a colleague, and land back on the same PTY. The node it
@@ -92,7 +92,11 @@ export const routes: Routes = [
           },
           {
             path: 'images',
-            loadComponent: () => import('./swarm/node-images-tab').then((m) => m.NodeImagesTab),
+            loadComponent: () => import('./ui/landing-redirect').then((m) => m.LandingRedirect),
+            data: {
+              landingPath: '/system/swarm/nodes/:id/images',
+              moved: "This node's images moved to the landing app",
+            } satisfies LandingRedirectData,
           },
           {
             path: 'volumes',

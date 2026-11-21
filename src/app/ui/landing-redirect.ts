@@ -52,23 +52,19 @@ export interface LandingRedirectData {
 }
 
 /**
- * The `id` param, read off `snapshot` itself or, failing that, walked up through `.parent` until
- * one carries it.
- *
- * Most routes mounting {@link LandingRedirect} match `:id` themselves, so their own `paramMap`
- * already has it. A route whose `:id` belongs to an ancestor instead — a node's `networks` tab
- * (qits-2354), reached at `swarm/nodes/:id/networks`, where only the parent route matches `:id` —
- * needs the walk: this app sets no `paramsInheritanceStrategy`, so a child snapshot's own
- * `paramMap` never carries a parent's params for a non-empty path.
+ * The matched route's `id` param, read off `snapshot` itself or, failing that, its nearest
+ * ancestor that has one — the same lookup the node resource tabs do for the node id, needed here
+ * too because `swarm/nodes/:id/images` (qits-2353) and `swarm/nodes/:id/networks` (qits-2354)
+ * mount this page as a child of `:id` rather than at the segment that carries it.
  */
-function findId(snapshot: ActivatedRouteSnapshot): string | null {
-  for (let current: ActivatedRouteSnapshot | null = snapshot; current; current = current.parent) {
-    const id = current.paramMap.get('id');
+function findIdParam(snapshot: ActivatedRouteSnapshot): string {
+  for (let route: ActivatedRouteSnapshot | null = snapshot; route; route = route.parent) {
+    const id = route.paramMap.get('id');
     if (id !== null) {
       return id;
     }
   }
-  return null;
+  return '';
 }
 
 /** {@link LandingRedirectData.landingPath}, with any `:id` filled from the matched route. */
@@ -76,16 +72,16 @@ function resolveLandingPath(landingPath: string, snapshot: ActivatedRouteSnapsho
   if (!landingPath.includes(':id')) {
     return landingPath;
   }
-  return landingPath.replace(':id', encodeURIComponent(findId(snapshot) ?? ''));
+  return landingPath.replace(':id', encodeURIComponent(findIdParam(snapshot)));
 }
 
 /**
  * The hand-off for every System page that moved to the landing app — `swarm/services` first
  * (qits-2344), `swarm/nodes` next (qits-2346), `swarm/nodes/:id` next (qits-2347),
  * `swarm/services/:id` next (qits-2345), `swarm/configs` next (qits-2348), `swarm/configs/:id` next
- * (qits-2349), `targets` next (qits-2351), a node's `networks` tab next (qits-2354), and later
- * siblings as they move too. Each mounting route
- * says where it goes and what to tell the reader through its own `data`, typed by
+ * (qits-2349), `targets` next (qits-2351), a node's `images` tab next (qits-2353), a node's
+ * `networks` tab next (qits-2354), and later siblings as they move too. Each mounting route says
+ * where it goes and what to tell the reader through its own `data`, typed by
  * {@link LandingRedirectData}.
  *
  * This draws almost nothing of its own: the route's own sentence naming where the page went, with
