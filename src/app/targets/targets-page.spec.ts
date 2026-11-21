@@ -37,9 +37,9 @@ const TARGETS_URL = '/system/api/targets';
 
 /**
  * The Targets page (epic qits-1481): the list, the create form's one-time install line, an edit's
- * inline 409, a delete's inline 409, and the target's own leases — modelled on `swarm-lists.spec.ts`
- * and `node-containers-tab.spec.ts`'s shape (a read, a table, an empty sentence, an error with a
- * retry) plus the writes a card offers.
+ * inline 409, a delete's inline 409, and the target's own leases — modelled on
+ * `node-containers-tab.spec.ts`'s shape (a read, a table, an empty sentence, an error with a retry)
+ * plus the writes a card offers.
  */
 describe('TargetsPage', () => {
   let http: HttpTestingController;

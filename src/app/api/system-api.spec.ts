@@ -46,9 +46,6 @@ describe('SystemApi', () => {
     http.expectOne('/system/api/swarm/services').flush([]);
     expect(await services).toEqual([]);
 
-    const configs = api.configs();
-    http.expectOne('/system/api/swarm/configs').flush([]);
-    expect(await configs).toEqual([]);
   });
 
   it('reads one swarm object by id, encoded', async () => {
