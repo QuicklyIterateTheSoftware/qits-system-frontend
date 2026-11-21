@@ -24,22 +24,22 @@ import { StatusBadge } from '../ui/status-badge';
 
 /**
  * The resource list a node still shows here, in the order an operator opens them. `images`,
- * `volumes` and `networks` are no longer among them — their tabs hand off to the landing app now
- * (qits-2353, qits-2355, qits-2354).
+ * `containers` and `networks` are no longer among them — their tabs hand off to the landing app
+ * now (qits-2353, qits-2352, qits-2354).
  */
-const TABS = [{ path: 'containers', label: 'Containers' }] as const;
+const TABS = [{ path: 'volumes', label: 'Volumes' }] as const;
 
 /**
  * One node: what swarm knows about it, and a tab bar over what docker knows.
  *
  * **The tabs are child routes, not a signal.** Each list is an address a reader can paste and the
- * back button can return to; a tab held in this component would have left every one of them
- * sharing one URL and would have forgotten which was open on every reload.
+ * back button can return to; a tab held in this component would leave them sharing one URL and
+ * would forget which was open on every reload.
  *
  * The facts here come from the manager, so they are readable for every node. What is underneath the
- * tabs is not: v1 reaches only the node this service runs on, and the one tab left says so for
- * itself rather than this page hiding it — a reader who followed a link to a foreign node deserves
- * to see why, not to find the tab missing.
+ * tabs is not: v1 reaches only the node this service runs on, and each tab says so for itself
+ * rather than this page hiding it — a reader who followed a link to a foreign node deserves to see
+ * why, not to find the tab missing.
  */
 @Component({
   selector: 'app-node-page',

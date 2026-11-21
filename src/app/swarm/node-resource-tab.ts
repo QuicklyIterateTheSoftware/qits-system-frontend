@@ -6,12 +6,10 @@ import { SystemApi, isNodeRemote } from '../api/system-api';
 import { IDLE, LOADING, failed, ready, type Loadable } from '../ui/loadable';
 
 /**
- * What a node's resource tab shares: the id out of the parent route, one read, and the one answer
- * none of them is allowed to draw as an error.
- *
- * `NodeContainersTab` is the only subclass left — `images`, `volumes` and `networks` hand off to
- * the landing app now (qits-2353, qits-2355, qits-2354) — until qits-2352 moves containers too and
- * this base class can go.
+ * What the one resource tab left here shares with the ones that moved: the id out of the parent
+ * route, one read, and the one answer it is not allowed to draw as an error. `images` (qits-2353),
+ * `containers` (qits-2352) and `networks` (qits-2354) all handed their own tabs off to the landing
+ * app; only `volumes` still renders through this base class.
  *
  * **`NODE_REMOTE` is not a failure.** A node-scoped read for a machine this service does not run on
  * answers 409 with that code, and it means "v1 does not reach there" — a fact about this platform,
@@ -19,15 +17,15 @@ import { IDLE, LOADING, failed, ready, type Loadable } from '../ui/loadable';
  * a card it explains itself and the reader moves on. Every tab therefore renders `remote()` ahead
  * of everything else, and the load state is left idle so the shared error bar stays silent.
  *
- * A base class rather than one generic component, because the tabs differed only in their
- * columns — and a component that took its columns as data would be a table framework nobody asked
- * for. The read and the template are the subclass's; everything else is here.
+ * A base class rather than one generic component, because the tabs differ only in their columns —
+ * and a component that took its columns as data would be a table framework nobody asked for. The
+ * read and the template are the subclass's; everything else is here.
  */
 export abstract class NodeResourceTab<T> {
   protected readonly api = inject(SystemApi);
   private readonly route = inject(ActivatedRoute);
 
-  /** The node id lives on the PARENT route: `swarm/nodes/:id/containers` is this route's own path. */
+  /** The node id lives on the PARENT route: `swarm/nodes/:id/volumes` is this route's own path. */
   private readonly params = toSignal(this.route.parent?.paramMap ?? of(convertToParamMap({})), {
     initialValue: convertToParamMap({}),
   });

@@ -103,26 +103,12 @@ export interface ServiceSummaryDto {
   readonly updatedAt?: string | null;
 }
 
-/** A row of `docker ps -a` on one node. */
-export interface ContainerSummaryDto {
-  readonly id: string;
+/** A row of `docker volume ls`. */
+export interface VolumeSummaryDto {
   readonly name: string;
-  readonly image: string;
-  readonly state: string;
-  readonly status: string;
+  readonly driver: string;
+  readonly mountpoint?: string | null;
   readonly createdAt?: string | null;
-  readonly ports?: string | null;
-}
-
-/**
- * The tail of a container's log.
- *
- * `truncated` is the service saying it dropped bytes, and the page says so too: a log a reader
- * believes is complete and is not is worse than no log.
- */
-export interface ContainerLogsDto {
-  readonly text: string;
-  readonly truncated: boolean;
 }
 
 /** What a terminal is running. `GLANCES` is the host monitor; `EXEC` is a shell in a container. */

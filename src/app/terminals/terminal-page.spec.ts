@@ -118,6 +118,11 @@ describe('TerminalPage', () => {
     expect(button(page, 'Terminate')?.disabled).toBe(true);
   });
 
+  /**
+   * The back link's own URL now hands off to the landing app (qits-2352) — `NodePage` still fetches
+   * the node for its header, but the child outlet renders `LandingRedirect` rather than making a
+   * containers request.
+   */
   it('terminates on request and goes back where the reader came from', async () => {
     const page = await open();
     http.expectOne('/system/api/terminals/t5').flush(EXEC);
@@ -131,7 +136,6 @@ describe('TerminalPage', () => {
 
     expect(router.url).toBe('/swarm/nodes/n1/containers');
     http.expectOne('/system/api/swarm/nodes/n1').flush({ id: 'n1', hostname: 'wohlben' });
-    http.expectOne((candidate) => candidate.url === '/system/api/nodes/n1/containers').flush([]);
     await settle();
   });
 
