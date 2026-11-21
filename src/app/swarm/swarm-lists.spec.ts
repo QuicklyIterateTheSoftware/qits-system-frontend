@@ -9,14 +9,13 @@ import { routes } from '../app.routes';
 import { settle as settleFixture } from '../testing/settle';
 
 /**
- * The remaining swarm listings — configs and secrets — in the states any of them can be in.
- * `services` moved to the landing app (qits-2344) and `nodes` followed (qits-2346); both hand-offs
- * are covered by `landing-redirect.spec.ts`.
+ * The remaining swarm listing — configs — in the states it can be in. `services` moved to the
+ * landing app (qits-2344), `nodes` followed (qits-2346), and `secrets` followed too (qits-2350);
+ * those hand-offs are covered by `landing-redirect.spec.ts`.
  *
- * They are one spec rather than four because they are one shape: a read, a table, an empty sentence
- * and an error with a retry. Asserting that shape once per page is what keeps a copied page from
- * quietly losing its empty state — the state nobody notices is missing until a fresh platform shows
- * a blank screen.
+ * It is its own spec, kept in this shape — a read, a table, an empty sentence and an error with a
+ * retry — because asserting that shape is what keeps a copied page from quietly losing its empty
+ * state — the state nobody notices is missing until a fresh platform shows a blank screen.
  */
 describe('the swarm listings', () => {
   let http: HttpTestingController;
@@ -63,21 +62,6 @@ describe('the swarm listings', () => {
       expect(rows(page)).toBe(1);
       expect(text(page)).toContain('edge-routes');
       expect(text(page)).toContain('2');
-    });
-  });
-
-  describe('secrets', () => {
-    /** The promise this page must keep: metadata, and a sentence saying why that is all. */
-    it('shows metadata and says a value is not something swarm gives back', async () => {
-      const page = await open('/swarm/secrets');
-      http
-        .expectOne('/system/api/swarm/secrets')
-        .flush([{ id: 'k1', name: 'idp-signing-key', createdAt: '2026-08-20T10:00:00Z' }]);
-      await settle();
-
-      expect(text(page)).toContain('idp-signing-key');
-      expect(text(page)).toContain('Metadata only');
-      expect(text(page)).not.toContain('Value');
     });
   });
 });

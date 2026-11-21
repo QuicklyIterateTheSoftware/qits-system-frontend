@@ -18,7 +18,6 @@ import {
   type OverviewDto,
   type PatchTargetDto,
   type RotateTargetRegistrationTokenDto,
-  type SecretSummaryDto,
   type SignInHarness,
   type StartTargetSignInDto,
   type ServiceSummaryDto,
@@ -79,13 +78,6 @@ export class SystemApi {
   /** One config with its contents. The service base64-decodes; this app renders the text as it is. */
   config(id: string): Promise<ConfigDetailDto> {
     return firstValueFrom(this.http.get<ConfigDetailDto>(this.swarmUrl('configs', id)));
-  }
-
-  /** Secrets, metadata only. There is no detail call, because swarm does not hand back a value. */
-  secrets(): Promise<readonly SecretSummaryDto[]> {
-    return firstValueFrom(
-      this.http.get<SecretSummaryDto[]>(`${this.base}/system/api/swarm/secrets`),
-    );
   }
 
   /**

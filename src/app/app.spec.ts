@@ -44,9 +44,9 @@ describe('App', () => {
         provideHttpClientTesting(),
         provideQitsNavigationLinks(NAV),
         { provide: WEB_SOCKET_FACTORY, useValue: sockets.open },
-        // The hand-off at `/swarm/nodes` fires this the moment it mounts; nothing here tests where
-        // it goes — `landing-redirect.spec.ts` does — so this keeps it from ever reaching
-        // jsdom's unimplemented real navigation.
+        // The hand-off at `/swarm/nodes` and `/swarm/secrets` fires this the moment it mounts;
+        // nothing here tests where it goes — `landing-redirect.spec.ts` does — so this keeps it
+        // from ever reaching jsdom's unimplemented real navigation.
         { provide: NAVIGATE_AWAY, useValue: () => undefined },
       ],
     });
@@ -105,10 +105,9 @@ describe('App', () => {
     ).not.toBeNull();
 
     await harness.navigateByUrl('/swarm/secrets');
-    http.expectOne('/system/api/swarm/secrets').flush([]);
     await harness.fixture.whenStable();
     expect(
-      (harness.routeNativeElement as HTMLElement).querySelector('main app-secrets-page'),
+      (harness.routeNativeElement as HTMLElement).querySelector('main app-landing-redirect'),
     ).not.toBeNull();
 
     http.verify();
