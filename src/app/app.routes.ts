@@ -32,7 +32,7 @@ import type { LandingRedirectData } from './ui/landing-redirect';
  * a tab held in a signal would leave every one of them as the same address. The bare node path now
  * hands off to the landing app's own node page (qits-2347), and so does `…/images` (qits-2353),
  * while the remaining three tabs stay here, each still reached through `NodePage` and
- * {@link SystemApi.node}, until qits-2354 and qits-2355 move them too.
+ * {@link SystemApi.node}, until qits-2352, qits-2354 and qits-2355 move them too.
  *
  * **A terminal is addressed by its own id and nothing else.** It outlives the page that opened it —
  * a reader can reload, or send the link to a colleague, and land back on the same PTY. The node it
