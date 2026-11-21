@@ -83,9 +83,6 @@ export interface ServiceSummaryDto {
 /** What a terminal is running. `GLANCES` is the host monitor; `EXEC` is a shell in a container. */
 export type TerminalKind = 'GLANCES' | 'EXEC';
 
-/** The two shells an exec terminal may ask for. The service refuses anything else with a 400. */
-export type TerminalShell = 'bash' | 'sh';
-
 /** The container an exec terminal is attached to. Null on a glances terminal. */
 export interface TerminalTargetDto {
   readonly id: string;
@@ -97,7 +94,6 @@ export interface TerminalDto {
   readonly id: string;
   readonly kind: TerminalKind;
   readonly container: TerminalTargetDto | null;
-  readonly shell?: TerminalShell | null;
   readonly createdAt?: string | null;
   readonly createdBy?: string | null;
   readonly attachedClients?: number | null;
@@ -109,12 +105,13 @@ export interface TerminalDto {
  *
  * A FLAT record, never a polymorphic body: the service's own note says so, and a discriminated
  * union on the wire would need a Jackson subtype registration that native image has to be told
- * about. `container` and `shell` are absent on a GLANCES request rather than null.
+ * about. `container` is absent on a GLANCES request rather than null — the only kind this app asks
+ * for now that the exec terminal page moved to the landing app (qits-2356); `createExecTerminal`
+ * and the `shell` it sent are gone with it.
  */
 export interface CreateTerminalDto {
   readonly kind: TerminalKind;
   readonly container?: string;
-  readonly shell?: TerminalShell;
 }
 
 /** The `{"message": …}` envelope every error in this service carries, with the optional code. */

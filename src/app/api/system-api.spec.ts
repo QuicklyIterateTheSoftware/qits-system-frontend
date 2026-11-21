@@ -8,10 +8,8 @@ import { SystemApi } from './system-api';
  *
  * The assertions worth having are the ones that are invisible on screen when they are wrong:
  * **every path is relative**, because a configured origin would leave the edge's session cookie
- * behind and turn every read into a 401; **the verbs are right**, because a POST that should have
- * been a DELETE fails as a 405 with nothing to see; and **the create body is flat and spells
- * `container`**, because the service reads exactly that field and a `containerId` would be a
- * silent 400 on every shell.
+ * behind and turn every read into a 401; and **the verbs are right**, because a POST that should
+ * have been a DELETE fails as a 405 with nothing to see.
  */
 describe('SystemApi', () => {
   let api: SystemApi;
@@ -56,27 +54,7 @@ describe('SystemApi', () => {
     request.flush({ id: 't1', kind: 'GLANCES', container: null });
   });
 
-  /** The field is `container`. A `containerId` would be a 400 the reader would read as "no bash". */
-  it('asks for a shell with a flat body naming container and shell', async () => {
-    void api.createExecTerminal('abc123', 'bash');
-
-    const request = http.expectOne('/system/api/terminals');
-    expect(request.request.body).toEqual({ kind: 'EXEC', container: 'abc123', shell: 'bash' });
-    request.flush(
-      { id: 't2', kind: 'EXEC', container: { id: 'abc123', name: '/x' } },
-      {
-        status: 201,
-        statusText: 'Created',
-      },
-    );
-  });
-
-  it('reads and deletes one terminal by id', async () => {
-    void api.terminal('t1');
-    http
-      .expectOne('/system/api/terminals/t1')
-      .flush({ id: 't1', kind: 'GLANCES', container: null });
-
+  it('deletes one terminal by id', async () => {
     void api.deleteTerminal('t1');
     const remove = http.expectOne('/system/api/terminals/t1');
     expect(remove.request.method).toBe('DELETE');

@@ -22,10 +22,11 @@ const STUB_ROUTES: Routes = [{ path: '**', component: Blank }];
 /**
  * The sub-navigation, which is the whole navigation of this app.
  *
- * Two rules, asserted in both directions: the URL decides which entry is current — including for
- * the pages that are not entries of their own, a node and a terminal, which belong to Nodes — and
- * the group headings are labels, never links, so a reader cannot click into a `/swarm` that does
- * not exist.
+ * Two rules, asserted in both directions: the URL decides which entry is current — including for a
+ * node, a page that is not an entry of its own but belongs to Nodes — and the group headings are
+ * labels, never links, so a reader cannot click into a `/swarm` that does not exist. A terminal
+ * (qits-2356) belongs to nothing here any more: `terminals/:id` hands off to the landing app before
+ * a reader sees this menu at all.
  */
 describe('SystemNav', () => {
   let router: Router;
@@ -81,12 +82,6 @@ describe('SystemNav', () => {
     expect(current()).toBe('Nodes');
 
     await mountAt('/swarm/nodes/n1/containers');
-    expect(current()).toBe('Nodes');
-  });
-
-  /** A shell is opened from a container table, so the menu keeps pointing at where it came from. */
-  it('keeps Nodes current on a terminal', async () => {
-    await mountAt('/terminals/t1?node=n1');
     expect(current()).toBe('Nodes');
   });
 

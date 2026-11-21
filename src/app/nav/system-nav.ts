@@ -19,8 +19,9 @@ interface Entry {
  * scanning six entries needs to know which of them is cluster-wide before clicking. Nothing sits
  * at `/swarm` on its own, so a link there would be a dead end.
  *
- * **A terminal belongs to whatever opened it.** An exec terminal is reached from a node's container
- * table, so `terminals/:id` keeps Nodes current; the glances terminal is the overview itself.
+ * **A terminal has no entry of its own.** The glances terminal is the overview itself, and
+ * `terminals/:id` (qits-2356) now only hands a reader off to the landing app — briefly, and with
+ * nowhere of its own in this menu to highlight while it does.
  *
  * **Targets sits under "System" beside Overview, not under "Swarm" (epic qits-1481).** A target is
  * a machine qits-system-runner-daemon can place CI, workspace or desk slots on — the fleet, not the
@@ -43,9 +44,7 @@ const ENTRIES: readonly Entry[] = [
   {
     path: '/swarm/nodes',
     label: 'Nodes',
-    // A terminal is opened from a container table, which lives under a node.
-    matches: (segments) =>
-      (segments[0] === 'swarm' && segments[1] === 'nodes') || segments[0] === 'terminals',
+    matches: (segments) => segments[0] === 'swarm' && segments[1] === 'nodes',
   },
   {
     path: '/swarm/services',

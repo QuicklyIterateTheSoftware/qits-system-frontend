@@ -7,14 +7,17 @@ import {
   type OverviewDto,
   type ServiceSummaryDto,
   type TerminalDto,
-  type TerminalShell,
 } from './dto';
 
 /**
  * Everything this app says to qits-platform-system, through the edge, at `/system/api`.
  *
- * **Reads everywhere, and three writes that are the point of the application**: create a terminal,
- * and delete one. Nothing here changes the swarm — v1 does not scale, restart or remove anything.
+ * **Reads everywhere, and two writes that are the point of the application**: create the glances
+ * terminal, and delete one. Nothing here changes the swarm — v1 does not scale, restart or remove
+ * anything. A terminal's own row is read from the create response alone now — nothing here reads
+ * one back by id — because the one terminal this app still opens, the shared glances session, is
+ * the one `createGlancesTerminal` already hands back; the page for an arbitrary terminal id moved
+ * to the landing app (qits-2356).
  *
  * **Every path is relative.** The SPA is served at `/system/` by the service itself, behind the edge
  * that serves `/system/api/…`, so a same-origin absolute path is what lets the browser's session
@@ -53,21 +56,6 @@ export class SystemApi {
    */
   createGlancesTerminal(): Promise<TerminalDto> {
     return this.createTerminal({ kind: 'GLANCES' });
-  }
-
-  /**
-   * Open a shell in a container.
-   *
-   * The container is sent as the id or name the caller has; the service validates it, resolves it
-   * through `docker container inspect`, and never puts the caller's string in an argv. A container
-   * that is not running is a 409, and an unknown one a 404 — both reach the caller whole.
-   */
-  createExecTerminal(container: string, shell: TerminalShell): Promise<TerminalDto> {
-    return this.createTerminal({ kind: 'EXEC', container, shell });
-  }
-
-  terminal(id: string): Promise<TerminalDto> {
-    return firstValueFrom(this.http.get<TerminalDto>(this.terminalUrl(id)));
   }
 
   /** Terminate a terminal now. The PTY dies with it; a browser closing its socket does not. */

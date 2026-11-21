@@ -80,19 +80,52 @@ function resolveLandingPath(landingPath: string, snapshot: ActivatedRouteSnapsho
 }
 
 /**
+ * The reader's own query string, verbatim — e.g. `?node=my0ms2bdz5` — or `''` when there is none.
+ *
+ * Read off `queryParamMap` rather than copied from the browser's own URL: a route can be reached
+ * with the same query parameter repeated, which `queryParamMap.getAll` keeps and a single string
+ * read would silently drop to its last value. `URLSearchParams` is what both encodes a value that
+ * needs it (`node=a b` becomes `node=a+b`) and renders nothing at all when the map is empty, so a
+ * mounting route that carries no query parameters hands off to a bare path rather than a trailing
+ * `?`.
+ */
+function resolveQueryString(snapshot: ActivatedRouteSnapshot): string {
+  const map = snapshot.queryParamMap;
+  if (!map) {
+    return '';
+  }
+  const params = new URLSearchParams();
+  for (const key of map.keys) {
+    for (const value of map.getAll(key)) {
+      params.append(key, value);
+    }
+  }
+  const query = params.toString();
+  return query ? `?${query}` : '';
+}
+
+/**
  * The hand-off for every System page that moved to the landing app — `swarm/services` first
  * (qits-2344), `swarm/nodes` next (qits-2346), `swarm/nodes/:id` next (qits-2347),
  * `swarm/services/:id` next (qits-2345), `swarm/configs` next (qits-2348), `swarm/configs/:id` next
  * (qits-2349), `targets` next (qits-2351), a node's `images` tab next (qits-2353), a node's
  * `containers` tab next (qits-2352), a node's `networks` tab next (qits-2354), a node's `volumes`
- * tab last (qits-2355) — with it, every one of a node's four resource tabs, and the node page
- * itself, lives here rather than in this application. Each mounting route says where it goes and
- * what to tell the reader through its own `data`, typed by {@link LandingRedirectData}.
+ * tab next (qits-2355), `terminals/:id` last (qits-2356) — with it, every one of a node's four
+ * resource tabs, and the node page itself, and a terminal, lives here rather than in this
+ * application. Each mounting route says where it goes and what to tell the reader through its own
+ * `data`, typed by {@link LandingRedirectData}.
  *
  * This draws almost nothing of its own: the route's own sentence naming where the page went, with
  * a link to it, for as long as the hand-off itself is still in flight — and the hand-off is what
  * actually sends a reader there, through {@link NAVIGATE_AWAY} rather than the router, because the
  * destination is a different Angular application and a `routerLink` would compile and go nowhere.
+ *
+ * **Every query parameter of the address a reader actually hit rides along.** `terminals/:id`
+ * (qits-2356) is why: its `node` parameter is the back link's only way home, and it is exactly as
+ * much view state in the landing app as it was here. {@link resolveQueryString} copies the whole
+ * query string rather than naming `node` alone, so a mounting route with query parameters of its
+ * own needs nothing extra to carry them too; a route reached with none hands off to a bare path,
+ * with no trailing `?`.
  *
  * Copied from qits-artifacts-frontend's `RepositoryRedirect` and qits-events-frontend's
  * `ProjectRedirect`/`EventRedirect` (qits-2338), the same shape of hand-off for their own moved
@@ -125,7 +158,7 @@ export class LandingRedirect {
     const snapshot = inject(ActivatedRoute).snapshot;
     const data = snapshot.data as LandingRedirectData;
     this.moved.set(data.moved);
-    const path = resolveLandingPath(data.landingPath, snapshot);
+    const path = resolveLandingPath(data.landingPath, snapshot) + resolveQueryString(snapshot);
     void landingOrigin(links).then((origin) => {
       const url = `${origin.replace(/\/+$/, '')}${path}`;
       this.href.set(url);

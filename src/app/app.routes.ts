@@ -17,10 +17,10 @@ import type { LandingRedirectData } from './ui/landing-redirect';
  *
  * **`swarm/nodes`, `swarm/nodes/:id`, `swarm/nodes/:id/images`, `swarm/nodes/:id/containers`,
  * `swarm/nodes/:id/volumes`, `swarm/nodes/:id/networks`, `swarm/services`, `swarm/services/:id`,
- * `swarm/configs`, `swarm/configs/:id`, `swarm/secrets` and `targets` hand off to the landing app**
- * — qits-2346, qits-2347, qits-2353, qits-2352, qits-2355, qits-2354, qits-2344, qits-2345,
- * qits-2348, qits-2349, qits-2350 and qits-2351 in that order — each mounting {@link
- * LandingRedirect} with its own `data`, typed by {@link LandingRedirectData}.
+ * `swarm/configs`, `swarm/configs/:id`, `swarm/secrets`, `targets` and `terminals/:id` hand off to
+ * the landing app** — qits-2346, qits-2347, qits-2353, qits-2352, qits-2355, qits-2354, qits-2344,
+ * qits-2345, qits-2348, qits-2349, qits-2350, qits-2351 and qits-2356 in that order — each mounting
+ * {@link LandingRedirect} with its own `data`, typed by {@link LandingRedirectData}.
  *
  * **Every address here starts at the root**, because this application is served at `/` on its own
  * host. It is a `system` app: what it shows is the machine the whole platform runs on, which belongs
@@ -37,10 +37,11 @@ import type { LandingRedirectData } from './ui/landing-redirect';
  * `swarm/nodes/:id` parent route that once rendered it holds only these four `LandingRedirect`
  * children now.
  *
- * **A terminal is addressed by its own id and nothing else.** It outlives the page that opened it —
- * a reader can reload, or send the link to a colleague, and land back on the same PTY. The node it
- * was opened from rides along as a query parameter so the back link knows where to go; it is view
- * state rather than identity, which is exactly what a query parameter is for.
+ * **A terminal moved to the landing app too (qits-2356), last of this file's hand-offs.** It is
+ * still addressed by its own id and nothing else, and the node it was opened from still rides along
+ * as a query parameter so the landing app's back link knows where to go — {@link LandingRedirect}
+ * carries every query parameter of the address a reader actually hit onto the landing URL it builds,
+ * so that one survives the hop same as it always did.
  *
  * **Every one of these is a deep link a reader will paste.** They survive a reload only because
  * qits-platform-system sets `quarkus.quinoa.enable-spa-routing=true`, which answers an unknown path
@@ -166,7 +167,11 @@ export const routes: Routes = [
       },
       {
         path: 'terminals/:id',
-        loadComponent: () => import('./terminals/terminal-page').then((m) => m.TerminalPage),
+        loadComponent: () => import('./ui/landing-redirect').then((m) => m.LandingRedirect),
+        data: {
+          landingPath: '/system/terminals/:id',
+          moved: 'This terminal moved to the landing app',
+        } satisfies LandingRedirectData,
       },
       { path: '**', component: NotFound },
     ],

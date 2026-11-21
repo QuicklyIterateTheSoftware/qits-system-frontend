@@ -45,9 +45,9 @@ describe('App', () => {
         provideQitsNavigationLinks(NAV),
         { provide: WEB_SOCKET_FACTORY, useValue: sockets.open },
         // The hand-off at `/swarm/nodes`, `/swarm/nodes/:id` (and its four tab children),
-        // `/swarm/configs`, `/swarm/configs/:id` and `/swarm/secrets` fires this the moment it
-        // mounts; nothing here tests where it goes — `landing-redirect.spec.ts` does — so this
-        // keeps it from ever reaching jsdom's unimplemented real navigation.
+        // `/swarm/configs`, `/swarm/configs/:id`, `/swarm/secrets` and `/terminals/:id` fires this
+        // the moment it mounts; nothing here tests where it goes — `landing-redirect.spec.ts` does
+        // — so this keeps it from ever reaching jsdom's unimplemented real navigation.
         { provide: NAVIGATE_AWAY, useValue: () => undefined },
       ],
     });
@@ -165,16 +165,16 @@ describe('App', () => {
     http.verify();
   });
 
-  it('routes a terminal id to its page and attaches a socket', async () => {
+  /**
+   * A terminal hands off to the landing app too (qits-2356) — `landing-redirect.spec.ts` covers
+   * where it goes, with the `node` query parameter kept for the back link.
+   */
+  it('hands a terminal id off to the landing app too', async () => {
     const harness = await RouterTestingHarness.create('/terminals/t9?node=n1');
-    http
-      .expectOne('/system/api/terminals/t9')
-      .flush({ id: 't9', kind: 'EXEC', container: { id: 'abc', name: 'qits-idp.1' }, shell: 'sh' });
     await harness.fixture.whenStable();
-
-    const layout = harness.routeNativeElement as HTMLElement;
-    expect(layout.querySelector('main app-terminal-page')).not.toBeNull();
-    expect(sockets.latest?.url).toBe(`ws://${location.host}/system/api/terminals/t9`);
+    expect(
+      (harness.routeNativeElement as HTMLElement).querySelector('main app-landing-redirect'),
+    ).not.toBeNull();
     http.verify();
   });
 

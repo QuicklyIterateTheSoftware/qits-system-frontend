@@ -21,10 +21,11 @@ const LANDING_ORIGIN = 'https://landing.qits.example';
  * (qits-2346), `swarm/nodes/:id` (qits-2347), `swarm/services/:id` (qits-2345), `swarm/configs`
  * (qits-2348), `swarm/configs/:id` (qits-2349), `swarm/secrets` (qits-2350), `targets` (qits-2351),
  * `swarm/nodes/:id/images` (qits-2353), `swarm/nodes/:id/containers` (qits-2352),
- * `swarm/nodes/:id/networks` (qits-2354) and `swarm/nodes/:id/volumes` (qits-2355) — the point of
- * this group is that the hand-off actually happens through real routing, rather than a stubbed
- * `ActivatedRoute` — `app.spec.ts` never instantiates this page either, so this is the only place
- * reaching one of these addresses through the real route table would show a wrong destination.
+ * `swarm/nodes/:id/networks` (qits-2354), `swarm/nodes/:id/volumes` (qits-2355) and `terminals/:id`
+ * (qits-2356) — the point of this group is that the hand-off actually happens through real routing,
+ * rather than a stubbed `ActivatedRoute` — `app.spec.ts` never instantiates this page either, so
+ * this is the only place reaching one of these addresses through the real route table would show a
+ * wrong destination.
  */
 describe('LandingRedirect', () => {
   describe('reached through routing', () => {
@@ -149,6 +150,45 @@ describe('LandingRedirect', () => {
       await harness.navigateByUrl('/targets');
       await vi.waitFor(() => expect(navigateAway).toHaveBeenCalled());
       expect(navigateAway).toHaveBeenCalledWith(`${LANDING_ORIGIN}/system/targets`);
+    });
+
+    /**
+     * The id rides through `:id` in `landingPath`, same as every other one, and the `node` query
+     * parameter — the back link's only way home — rides along too, untouched.
+     */
+    it('hands one terminal off to the landing app, with its query parameter kept', async () => {
+      await harness.navigateByUrl(
+        '/terminals/00000000-0000-4000-8000-000000000003?node=my0ms2bdz5',
+      );
+      await vi.waitFor(() => expect(navigateAway).toHaveBeenCalled());
+      expect(navigateAway).toHaveBeenCalledWith(
+        `${LANDING_ORIGIN}/system/terminals/00000000-0000-4000-8000-000000000003?node=my0ms2bdz5`,
+      );
+    });
+
+    /** Both the `:id` segment and the query string are percent-encoded, independently of each other. */
+    it("hands one terminal off to the landing app, with both its id and its query parameter's value encoded", async () => {
+      await harness.navigateByUrl('/terminals/dev%20x?node=a%20b');
+      await vi.waitFor(() => expect(navigateAway).toHaveBeenCalled());
+      expect(navigateAway).toHaveBeenCalledWith(
+        `${LANDING_ORIGIN}/system/terminals/dev%20x?node=a+b`,
+      );
+    });
+
+    /** Every query parameter of the address a reader actually hit rides along, not `node` alone. */
+    it('hands a page off to the landing app with several query parameters, all of them', async () => {
+      await harness.navigateByUrl('/swarm/services?node=my0ms2bdz5&tab=logs');
+      await vi.waitFor(() => expect(navigateAway).toHaveBeenCalled());
+      expect(navigateAway).toHaveBeenCalledWith(
+        `${LANDING_ORIGIN}/system/swarm/services?node=my0ms2bdz5&tab=logs`,
+      );
+    });
+
+    /** No query parameters at all means no trailing `?`, not an empty one. */
+    it('hands a page off to the landing app with no query parameters, and no trailing ?', async () => {
+      await harness.navigateByUrl('/swarm/services');
+      await vi.waitFor(() => expect(navigateAway).toHaveBeenCalled());
+      expect(navigateAway).toHaveBeenCalledWith(`${LANDING_ORIGIN}/system/swarm/services`);
     });
   });
 
