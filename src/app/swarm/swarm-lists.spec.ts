@@ -9,14 +9,14 @@ import { routes } from '../app.routes';
 import { settle as settleFixture } from '../testing/settle';
 
 /**
- * The remaining swarm listings — configs and secrets — in the states any of them can be in.
- * `services` moved to the landing app (qits-2344) and `nodes` followed (qits-2346); both hand-offs
- * are covered by `landing-redirect.spec.ts`.
+ * The one swarm listing left here: secrets, in the states it can be in. `services` moved to the
+ * landing app (qits-2344), `nodes` followed (qits-2346), and `configs` followed too (qits-2348); all
+ * three hand-offs are covered by `landing-redirect.spec.ts`.
  *
- * They are one spec rather than four because they are one shape: a read, a table, an empty sentence
- * and an error with a retry. Asserting that shape once per page is what keeps a copied page from
+ * This was one spec for every remaining listing because they were one shape: a read, a table, an
+ * empty sentence and an error with a retry. Asserting that shape is what keeps a copied page from
  * quietly losing its empty state — the state nobody notices is missing until a fresh platform shows
- * a blank screen.
+ * a blank screen. Secrets is what is left to assert it on.
  */
 describe('the swarm listings', () => {
   let http: HttpTestingController;
@@ -47,24 +47,6 @@ describe('the swarm listings', () => {
   function text(element: HTMLElement): string {
     return element.textContent?.replace(/\s+/g, ' ').trim() ?? '';
   }
-
-  function rows(element: HTMLElement): number {
-    return element.querySelectorAll('tbody tr').length;
-  }
-
-  describe('configs', () => {
-    it('lists configs and counts their labels', async () => {
-      const page = await open('/swarm/configs');
-      http
-        .expectOne('/system/api/swarm/configs')
-        .flush([{ id: 'c1', name: 'edge-routes', labels: { owner: 'qits', tier: 'platform' } }]);
-      await settle();
-
-      expect(rows(page)).toBe(1);
-      expect(text(page)).toContain('edge-routes');
-      expect(text(page)).toContain('2');
-    });
-  });
 
   describe('secrets', () => {
     /** The promise this page must keep: metadata, and a sentence saying why that is all. */

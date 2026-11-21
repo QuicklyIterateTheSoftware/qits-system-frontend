@@ -46,10 +46,6 @@ describe('SystemApi', () => {
     http.expectOne('/system/api/swarm/services').flush([]);
     expect(await services).toEqual([]);
 
-    const configs = api.configs();
-    http.expectOne('/system/api/swarm/configs').flush([]);
-    expect(await configs).toEqual([]);
-
     const secrets = api.secrets();
     http.expectOne('/system/api/swarm/secrets').flush([]);
     expect(await secrets).toEqual([]);

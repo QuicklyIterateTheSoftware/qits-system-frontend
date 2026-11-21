@@ -5,7 +5,6 @@ import { QITS_API_BASE } from './api-base';
 import {
   NODE_REMOTE,
   type ConfigDetailDto,
-  type ConfigSummaryDto,
   type ContainerLogsDto,
   type ContainerSummaryDto,
   type CreateTargetDto,
@@ -67,12 +66,6 @@ export class SystemApi {
   services(): Promise<readonly ServiceSummaryDto[]> {
     return firstValueFrom(
       this.http.get<ServiceSummaryDto[]>(`${this.base}/system/api/swarm/services`),
-    );
-  }
-
-  configs(): Promise<readonly ConfigSummaryDto[]> {
-    return firstValueFrom(
-      this.http.get<ConfigSummaryDto[]>(`${this.base}/system/api/swarm/configs`),
     );
   }
 
