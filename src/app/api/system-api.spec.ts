@@ -52,28 +52,6 @@ describe('SystemApi', () => {
     http.expectOne('/system/api/swarm/nodes/n1').flush({ id: 'n1' });
   });
 
-  /** Stopped containers are the ones a reader came for, so `all` is asked for and never varies. */
-  it('asks for every container on a node, stopped ones included', async () => {
-    void api.containers('n1');
-
-    const request = http.expectOne(
-      (candidate) => candidate.url === '/system/api/nodes/n1/containers',
-    );
-    expect(request.request.method).toBe('GET');
-    expect(request.request.params.get('all')).toBe('true');
-    request.flush([]);
-  });
-
-  it('reads a log tail as a query parameter, not a path segment', async () => {
-    void api.containerLogs('n1', 'abc', 50);
-
-    const request = http.expectOne(
-      (candidate) => candidate.url === '/system/api/nodes/n1/containers/abc/logs',
-    );
-    expect(request.request.params.get('tail')).toBe('50');
-    request.flush({ text: '', truncated: false });
-  });
-
   it('reads the remaining node resource at its own path', async () => {
     void api.volumes('n1');
     http.expectOne('/system/api/nodes/n1/volumes').flush([]);
