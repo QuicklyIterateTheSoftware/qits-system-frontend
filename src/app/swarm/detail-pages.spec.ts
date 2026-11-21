@@ -43,7 +43,7 @@ describe('the detail pages', () => {
   }
 
   describe('a node', () => {
-    it('draws its facts and offers the four resource tabs', async () => {
+    it('draws its facts and offers the three resource tabs', async () => {
       const page = await open('/swarm/nodes/n1/images');
       http.expectOne('/system/api/swarm/nodes/n1').flush({
         id: 'n1',
@@ -65,7 +65,7 @@ describe('the detail pages', () => {
       const tabs = Array.from(page.querySelectorAll('.tabs a')).map((link) =>
         link.textContent?.trim(),
       );
-      expect(tabs).toEqual(['Containers', 'Images', 'Volumes', 'Networks']);
+      expect(tabs).toEqual(['Containers', 'Images', 'Volumes']);
       expect(page.querySelector('.tabs a.current')?.textContent?.trim()).toBe('Images');
     });
   });

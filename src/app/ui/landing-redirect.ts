@@ -51,19 +51,40 @@ export interface LandingRedirectData {
   readonly moved: string;
 }
 
+/**
+ * The `id` param, read off `snapshot` itself or, failing that, walked up through `.parent` until
+ * one carries it.
+ *
+ * Most routes mounting {@link LandingRedirect} match `:id` themselves, so their own `paramMap`
+ * already has it. A route whose `:id` belongs to an ancestor instead — a node's `networks` tab
+ * (qits-2354), reached at `swarm/nodes/:id/networks`, where only the parent route matches `:id` —
+ * needs the walk: this app sets no `paramsInheritanceStrategy`, so a child snapshot's own
+ * `paramMap` never carries a parent's params for a non-empty path.
+ */
+function findId(snapshot: ActivatedRouteSnapshot): string | null {
+  for (let current: ActivatedRouteSnapshot | null = snapshot; current; current = current.parent) {
+    const id = current.paramMap.get('id');
+    if (id !== null) {
+      return id;
+    }
+  }
+  return null;
+}
+
 /** {@link LandingRedirectData.landingPath}, with any `:id` filled from the matched route. */
 function resolveLandingPath(landingPath: string, snapshot: ActivatedRouteSnapshot): string {
   if (!landingPath.includes(':id')) {
     return landingPath;
   }
-  return landingPath.replace(':id', encodeURIComponent(snapshot.paramMap.get('id') ?? ''));
+  return landingPath.replace(':id', encodeURIComponent(findId(snapshot) ?? ''));
 }
 
 /**
  * The hand-off for every System page that moved to the landing app — `swarm/services` first
  * (qits-2344), `swarm/nodes` next (qits-2346), `swarm/nodes/:id` next (qits-2347),
  * `swarm/services/:id` next (qits-2345), `swarm/configs` next (qits-2348), `swarm/configs/:id` next
- * (qits-2349), `targets` next (qits-2351), and later siblings as they move too. Each mounting route
+ * (qits-2349), `targets` next (qits-2351), a node's `networks` tab next (qits-2354), and later
+ * siblings as they move too. Each mounting route
  * says where it goes and what to tell the reader through its own `data`, typed by
  * {@link LandingRedirectData}.
  *

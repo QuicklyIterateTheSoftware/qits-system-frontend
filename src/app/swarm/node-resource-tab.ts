@@ -6,7 +6,7 @@ import { SystemApi, isNodeRemote } from '../api/system-api';
 import { IDLE, LOADING, failed, ready, type Loadable } from '../ui/loadable';
 
 /**
- * What the four resource tabs of a node share: the id out of the parent route, one read, and the
+ * What the three resource tabs of a node share: the id out of the parent route, one read, and the
  * one answer none of them is allowed to draw as an error.
  *
  * **`NODE_REMOTE` is not a failure.** A node-scoped read for a machine this service does not run on
@@ -15,9 +15,9 @@ import { IDLE, LOADING, failed, ready, type Loadable } from '../ui/loadable';
  * a card it explains itself and the reader moves on. Every tab therefore renders `remote()` ahead
  * of everything else, and the load state is left idle so the shared error bar stays silent.
  *
- * A base class rather than one generic component, because the four tabs differ only in their
- * columns — and a component that took its columns as data would be a table framework nobody asked
- * for. The read and the template are the subclass's; everything else is here.
+ * A base class rather than one generic component, because the tabs differ only in their columns —
+ * and a component that took its columns as data would be a table framework nobody asked for. The
+ * read and the template are the subclass's; everything else is here.
  */
 export abstract class NodeResourceTab<T> {
   protected readonly api = inject(SystemApi);

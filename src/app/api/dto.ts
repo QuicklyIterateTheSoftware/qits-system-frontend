@@ -131,15 +131,6 @@ export interface VolumeSummaryDto {
   readonly createdAt?: string | null;
 }
 
-/** A row of `docker network ls`. */
-export interface NetworkSummaryDto {
-  readonly id: string;
-  readonly name: string;
-  readonly driver: string;
-  readonly scope: string;
-  readonly createdAt?: string | null;
-}
-
 /**
  * The tail of a container's log.
  *

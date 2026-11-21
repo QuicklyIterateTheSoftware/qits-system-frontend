@@ -19,11 +19,11 @@ const LANDING_ORIGIN = 'https://landing.qits.example';
 /**
  * The hand-off every moved System page mounts — `swarm/services` (qits-2344), `swarm/nodes`
  * (qits-2346), `swarm/nodes/:id` (qits-2347), `swarm/services/:id` (qits-2345), `swarm/configs`
- * (qits-2348), `swarm/configs/:id` (qits-2349), `swarm/secrets` (qits-2350) and `targets` (qits-2351)
- * so far — the point of this group is that the hand-off actually happens through real routing,
- * rather than a stubbed `ActivatedRoute` — `app.spec.ts` never instantiates this page either, so
- * this is the only place reaching one of these addresses through the real route table would show a
- * wrong destination.
+ * (qits-2348), `swarm/configs/:id` (qits-2349), `swarm/secrets` (qits-2350), `targets` (qits-2351)
+ * and `swarm/nodes/:id/networks` (qits-2354) so far — the point of this group is that the hand-off
+ * actually happens through real routing, rather than a stubbed `ActivatedRoute` — `app.spec.ts`
+ * never instantiates this page either, so this is the only place reaching one of these addresses
+ * through the real route table would show a wrong destination.
  */
 describe('LandingRedirect', () => {
   describe('reached through routing', () => {
@@ -78,11 +78,27 @@ describe('LandingRedirect', () => {
       expect(navigateAway).toHaveBeenCalledWith(`${LANDING_ORIGIN}/system/swarm/services/dev%20x`);
     });
 
-    /** The bare node path hands off; its four tab children stay on `NodePage` — `app.spec.ts` covers that. */
+    /**
+     * The bare node path hands off; of its tab children, only `networks` does too (below) — the
+     * other three stay on `NodePage`, which `app.spec.ts` covers.
+     */
     it('hands one swarm node off to the landing app, with its id encoded', async () => {
       await harness.navigateByUrl('/swarm/nodes/dev%20x');
       await vi.waitFor(() => expect(navigateAway).toHaveBeenCalled());
       expect(navigateAway).toHaveBeenCalledWith(`${LANDING_ORIGIN}/system/swarm/nodes/dev%20x`);
+    });
+
+    /**
+     * The `networks` tab's `:id` belongs to the parent `swarm/nodes/:id` route, not to this child
+     * route itself — the case `landing-redirect.ts`'s `findId` walk was added for (qits-2354). The
+     * id still rides through `landingPath`'s `:id`, percent-encoded, same as every other one.
+     */
+    it("hands one node's networks off to the landing app, with its id encoded", async () => {
+      await harness.navigateByUrl('/swarm/nodes/a%2Fb/networks');
+      await vi.waitFor(() => expect(navigateAway).toHaveBeenCalled());
+      expect(navigateAway).toHaveBeenCalledWith(
+        `${LANDING_ORIGIN}/system/swarm/nodes/a%2Fb/networks`,
+      );
     });
 
     /** The id rides through `:id` in `landingPath`, percent-encoded — not copied from the URL as-is. */

@@ -116,7 +116,8 @@ describe('App', () => {
 
   /**
    * The bare node path hands off to the landing app now (qits-2347) — `landing-redirect.spec.ts`
-   * covers where it goes and the id encoding. Its four tab children stay on `NodePage` here.
+   * covers where it goes and the id encoding. Of its tab children, `networks` hands off too now
+   * (qits-2354, also covered there); the other three stay on `NodePage` here.
    */
   it('hands the bare node path off to the landing app', async () => {
     const harness = await RouterTestingHarness.create('/swarm/nodes/n1');
