@@ -44,11 +44,10 @@ describe('App', () => {
         provideHttpClientTesting(),
         provideQitsNavigationLinks(NAV),
         { provide: WEB_SOCKET_FACTORY, useValue: sockets.open },
-        // The hand-off at `/swarm/nodes`, `/swarm/nodes/:id`, `/swarm/configs`, `/swarm/configs/:id`
-        // and `/swarm/secrets`
-        // fires this the moment it mounts; nothing here tests where it goes —
-        // `landing-redirect.spec.ts` does — so this keeps it from ever reaching jsdom's
-        // unimplemented real navigation.
+        // The hand-off at `/swarm/nodes`, `/swarm/nodes/:id` (and its four tab children),
+        // `/swarm/configs`, `/swarm/configs/:id` and `/swarm/secrets` fires this the moment it
+        // mounts; nothing here tests where it goes — `landing-redirect.spec.ts` does — so this
+        // keeps it from ever reaching jsdom's unimplemented real navigation.
         { provide: NAVIGATE_AWAY, useValue: () => undefined },
       ],
     });
@@ -116,9 +115,10 @@ describe('App', () => {
 
   /**
    * The bare node path hands off to the landing app now (qits-2347) — `landing-redirect.spec.ts`
-   * covers where it goes and the id encoding. Of its tab children, `images` (qits-2353),
-   * `containers` (qits-2352) and `networks` (qits-2354) hand off too, also covered there; the
-   * remaining one, Volumes, stays on `NodePage` here.
+   * covers where it goes and the id encoding. Its four tab children hand off too: `images`
+   * (qits-2353), `containers` (qits-2352), `networks` (qits-2354) and `volumes` (qits-2355) last —
+   * with `NodePage` gone, the parent `swarm/nodes/:id` route mounts no component of its own, so
+   * none of these makes a request for the node's own facts any more.
    */
   it('hands the bare node path off to the landing app', async () => {
     const harness = await RouterTestingHarness.create('/swarm/nodes/n1');
@@ -131,13 +131,6 @@ describe('App', () => {
 
   it('hands the images tab off to the landing app too', async () => {
     const harness = await RouterTestingHarness.create('/swarm/nodes/n1/images');
-    http.expectOne('/system/api/swarm/nodes/n1').flush({
-      id: 'n1',
-      hostname: 'wohlben',
-      role: 'manager',
-      availability: 'Active',
-      status: 'Ready',
-    });
     await harness.fixture.whenStable();
     expect(
       (harness.routeNativeElement as HTMLElement).querySelector('main app-landing-redirect'),
@@ -147,13 +140,6 @@ describe('App', () => {
 
   it('hands the networks tab off to the landing app too', async () => {
     const harness = await RouterTestingHarness.create('/swarm/nodes/n1/networks');
-    http.expectOne('/system/api/swarm/nodes/n1').flush({
-      id: 'n1',
-      hostname: 'wohlben',
-      role: 'manager',
-      availability: 'Active',
-      status: 'Ready',
-    });
     await harness.fixture.whenStable();
     expect(
       (harness.routeNativeElement as HTMLElement).querySelector('main app-landing-redirect'),
@@ -163,13 +149,6 @@ describe('App', () => {
 
   it('hands the containers tab off to the landing app too', async () => {
     const harness = await RouterTestingHarness.create('/swarm/nodes/n1/containers');
-    http.expectOne('/system/api/swarm/nodes/n1').flush({
-      id: 'n1',
-      hostname: 'wohlben',
-      role: 'manager',
-      availability: 'Active',
-      status: 'Ready',
-    });
     await harness.fixture.whenStable();
     expect(
       (harness.routeNativeElement as HTMLElement).querySelector('main app-landing-redirect'),
@@ -177,20 +156,12 @@ describe('App', () => {
     http.verify();
   });
 
-  it('still renders the volumes tab on NodePage at the tab child route', async () => {
+  it('hands the volumes tab off to the landing app too', async () => {
     const harness = await RouterTestingHarness.create('/swarm/nodes/n1/volumes');
-    http.expectOne('/system/api/swarm/nodes/n1').flush({
-      id: 'n1',
-      hostname: 'wohlben',
-      role: 'manager',
-      availability: 'Active',
-      status: 'Ready',
-    });
-    http.expectOne((candidate) => candidate.url === '/system/api/nodes/n1/volumes').flush([]);
     await harness.fixture.whenStable();
-
-    const layout = harness.routeNativeElement as HTMLElement;
-    expect(layout.querySelector('main app-node-page app-node-volumes-tab')).not.toBeNull();
+    expect(
+      (harness.routeNativeElement as HTMLElement).querySelector('main app-landing-redirect'),
+    ).not.toBeNull();
     http.verify();
   });
 

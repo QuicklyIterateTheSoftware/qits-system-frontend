@@ -1,16 +1,13 @@
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { DOCUMENT, Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { QITS_API_BASE } from './api-base';
 import {
-  NODE_REMOTE,
   type CreateTerminalDto,
-  type NodeDetailDto,
   type OverviewDto,
   type ServiceSummaryDto,
   type TerminalDto,
   type TerminalShell,
-  type VolumeSummaryDto,
 } from './dto';
 
 /**
@@ -26,9 +23,7 @@ import {
  * same path absolute for one reason only: `WebSocket` takes no relative URL.
  *
  * **Failures are thrown, not described.** An `HttpErrorResponse` reaching a caller still holds the
- * service's `{"message": …}` body; `ui/loadable.ts` is the one place that body is read. The one
- * error a caller reads rather than reports is the 409 `NODE_REMOTE` a foreign node's resources
- * answer, and {@link isNodeRemote} is how a page recognises it.
+ * service's `{"message": …}` body; `ui/loadable.ts` is the one place that body is read.
  */
 @Injectable({ providedIn: 'root' })
 export class SystemApi {
@@ -41,18 +36,10 @@ export class SystemApi {
     return firstValueFrom(this.http.get<OverviewDto>(`${this.base}/system/api/overview`));
   }
 
-  node(id: string): Promise<NodeDetailDto> {
-    return firstValueFrom(this.http.get<NodeDetailDto>(this.swarmUrl('nodes', id)));
-  }
-
   services(): Promise<readonly ServiceSummaryDto[]> {
     return firstValueFrom(
       this.http.get<ServiceSummaryDto[]>(`${this.base}/system/api/swarm/services`),
     );
-  }
-
-  volumes(nodeId: string): Promise<readonly VolumeSummaryDto[]> {
-    return firstValueFrom(this.http.get<VolumeSummaryDto[]>(`${this.nodeUrl(nodeId)}/volumes`));
   }
 
   /**
@@ -109,32 +96,7 @@ export class SystemApi {
     return firstValueFrom(this.http.post<TerminalDto>(`${this.base}/system/api/terminals`, body));
   }
 
-  private swarmUrl(kind: string, id: string): string {
-    return `${this.base}/system/api/swarm/${kind}/${encodeURIComponent(id)}`;
-  }
-
-  private nodeUrl(nodeId: string): string {
-    return `${this.base}/system/api/nodes/${encodeURIComponent(nodeId)}`;
-  }
-
   private terminalUrl(id: string): string {
     return `${this.base}/system/api/terminals/${encodeURIComponent(id)}`;
   }
-}
-
-/**
- * Whether a failed node-scoped read is v1's boundary rather than a fault.
- *
- * The service answers 409 `{"code":"NODE_REMOTE"}` for a node that is not the one it runs on. It is
- * checked by code and not by status alone because 409 also means "that container is not running",
- * which is an entirely different sentence on screen.
- */
-export function isNodeRemote(error: unknown): boolean {
-  return (
-    error instanceof HttpErrorResponse &&
-    error.status === 409 &&
-    typeof error.error === 'object' &&
-    error.error !== null &&
-    (error.error as { code?: unknown }).code === NODE_REMOTE
-  );
 }

@@ -1,7 +1,7 @@
-import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
+import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { SystemApi, isNodeRemote } from './system-api';
+import { SystemApi } from './system-api';
 
 /**
  * Every call, at the addresses qits-platform-system serves them at.
@@ -9,10 +9,9 @@ import { SystemApi, isNodeRemote } from './system-api';
  * The assertions worth having are the ones that are invisible on screen when they are wrong:
  * **every path is relative**, because a configured origin would leave the edge's session cookie
  * behind and turn every read into a 401; **the verbs are right**, because a POST that should have
- * been a DELETE fails as a 405 with nothing to see; **an id is encoded**, because a service name is
- * a path segment and a container ref is whatever the reader clicked; and **the create body is flat
- * and spells `container`**, because the service reads exactly that field and a `containerId` would
- * be a silent 400 on every shell.
+ * been a DELETE fails as a 405 with nothing to see; and **the create body is flat and spells
+ * `container`**, because the service reads exactly that field and a `containerId` would be a
+ * silent 400 on every shell.
  */
 describe('SystemApi', () => {
   let api: SystemApi;
@@ -45,16 +44,6 @@ describe('SystemApi', () => {
     const services = api.services();
     http.expectOne('/system/api/swarm/services').flush([]);
     expect(await services).toEqual([]);
-  });
-
-  it('reads one swarm object by id, encoded', async () => {
-    void api.node('n1');
-    http.expectOne('/system/api/swarm/nodes/n1').flush({ id: 'n1' });
-  });
-
-  it('reads the remaining node resource at its own path', async () => {
-    void api.volumes('n1');
-    http.expectOne('/system/api/nodes/n1/volumes').flush([]);
   });
 
   /** GLANCES is find-or-create, so the body carries the kind and nothing else. */
@@ -97,26 +86,5 @@ describe('SystemApi', () => {
   /** WebSocket takes no relative URL, so this is the one absolute address in the app. */
   it('builds an absolute socket URL from the page, same host and same path', () => {
     expect(api.socketUrl('t1')).toBe(`ws://${location.host}/system/api/terminals/t1`);
-  });
-});
-
-/**
- * The one error read by its body rather than its status. 409 also means "that container is not
- * running", which is a different sentence and must not become a "not reachable" card.
- */
-describe('isNodeRemote', () => {
-  const conflict = (body: unknown) =>
-    new HttpErrorResponse({ status: 409, statusText: 'Conflict', error: body });
-
-  it('recognises the code the service sends for a foreign node', () => {
-    expect(isNodeRemote(conflict({ code: 'NODE_REMOTE', message: 'only the local node' }))).toBe(
-      true,
-    );
-  });
-
-  it('does not mistake another 409 for it', () => {
-    expect(isNodeRemote(conflict({ message: 'container is not running' }))).toBe(false);
-    expect(isNodeRemote(new HttpErrorResponse({ status: 503 }))).toBe(false);
-    expect(isNodeRemote(new Error('offline'))).toBe(false);
   });
 });

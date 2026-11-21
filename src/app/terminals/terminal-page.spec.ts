@@ -119,9 +119,9 @@ describe('TerminalPage', () => {
   });
 
   /**
-   * The back link's own URL now hands off to the landing app (qits-2352) — `NodePage` still fetches
-   * the node for its header, but the child outlet renders `LandingRedirect` rather than making a
-   * containers request.
+   * The back link's own URL hands off to the landing app (qits-2352) — `swarm/nodes/:id` mounts no
+   * component of its own any more (qits-2355 retired the last reason it did, `NodePage`), so
+   * landing there makes no request of this app at all; `LandingRedirect` is what actually renders.
    */
   it('terminates on request and goes back where the reader came from', async () => {
     const page = await open();
@@ -135,7 +135,6 @@ describe('TerminalPage', () => {
     await settle();
 
     expect(router.url).toBe('/swarm/nodes/n1/containers');
-    http.expectOne('/system/api/swarm/nodes/n1').flush({ id: 'n1', hostname: 'wohlben' });
     await settle();
   });
 

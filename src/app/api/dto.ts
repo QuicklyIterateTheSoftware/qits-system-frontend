@@ -63,29 +63,6 @@ export interface OverviewDto {
   readonly swarm: SwarmInfo;
 }
 
-/** A row of `docker node ls`. */
-export interface NodeSummaryDto {
-  readonly id: string;
-  readonly hostname: string;
-  readonly role: string;
-  readonly availability: string;
-  readonly status: string;
-  readonly managerStatus?: string | null;
-  readonly engineVersion?: string | null;
-  readonly address?: string | null;
-}
-
-/** One node, with what `docker node inspect` adds to its row. */
-export interface NodeDetailDto extends NodeSummaryDto {
-  readonly os?: string | null;
-  readonly architecture?: string | null;
-  readonly cpus?: number | null;
-  readonly memoryBytes?: number | null;
-  readonly createdAt?: string | null;
-  readonly updatedAt?: string | null;
-  readonly labels?: Readonly<Record<string, string>> | null;
-}
-
 /**
  * A row of `docker service ls`.
  *
@@ -101,14 +78,6 @@ export interface ServiceSummaryDto {
   readonly image: string;
   readonly ports?: string | null;
   readonly updatedAt?: string | null;
-}
-
-/** A row of `docker volume ls`. */
-export interface VolumeSummaryDto {
-  readonly name: string;
-  readonly driver: string;
-  readonly mountpoint?: string | null;
-  readonly createdAt?: string | null;
 }
 
 /** What a terminal is running. `GLANCES` is the host monitor; `EXEC` is a shell in a container. */
@@ -147,14 +116,6 @@ export interface CreateTerminalDto {
   readonly container?: string;
   readonly shell?: TerminalShell;
 }
-
-/**
- * What a node-scoped read answers for a node that is not this one: 409 with a code.
- *
- * It is the one error this app reads by its body rather than by its status, because it is not a
- * fault — it is v1's boundary, and the page draws it as a card instead of as a red bar.
- */
-export const NODE_REMOTE = 'NODE_REMOTE';
 
 /** The `{"message": …}` envelope every error in this service carries, with the optional code. */
 export interface ErrorDto {
