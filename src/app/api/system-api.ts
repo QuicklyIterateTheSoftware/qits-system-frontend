@@ -1,11 +1,9 @@
-import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { DOCUMENT, Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { QITS_API_BASE } from './api-base';
 import {
   NODE_REMOTE,
-  type ContainerLogsDto,
-  type ContainerSummaryDto,
   type CreateTerminalDto,
   type NodeDetailDto,
   type OverviewDto,
@@ -50,31 +48,6 @@ export class SystemApi {
   services(): Promise<readonly ServiceSummaryDto[]> {
     return firstValueFrom(
       this.http.get<ServiceSummaryDto[]>(`${this.base}/system/api/swarm/services`),
-    );
-  }
-
-  /**
-   * Every container on one node, stopped ones included.
-   *
-   * `all=true` is the default this app asks for and never varies: a container that exited two
-   * minutes ago is the one an operator came to look at, and hiding it would make the page useless
-   * for the only question it is opened with.
-   */
-  containers(nodeId: string): Promise<readonly ContainerSummaryDto[]> {
-    return firstValueFrom(
-      this.http.get<ContainerSummaryDto[]>(`${this.nodeUrl(nodeId)}/containers`, {
-        params: new HttpParams().set('all', true),
-      }),
-    );
-  }
-
-  /** The tail of a container's log — the last `tail` lines, as one blob of text. */
-  containerLogs(nodeId: string, containerId: string, tail = 200): Promise<ContainerLogsDto> {
-    return firstValueFrom(
-      this.http.get<ContainerLogsDto>(
-        `${this.nodeUrl(nodeId)}/containers/${encodeURIComponent(containerId)}/logs`,
-        { params: new HttpParams().set('tail', tail) },
-      ),
     );
   }
 

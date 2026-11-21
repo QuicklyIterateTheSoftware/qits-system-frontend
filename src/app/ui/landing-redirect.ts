@@ -54,8 +54,9 @@ export interface LandingRedirectData {
 /**
  * The matched route's `id` param, read off `snapshot` itself or, failing that, its nearest
  * ancestor that has one — the same lookup the node resource tabs do for the node id, needed here
- * too because `swarm/nodes/:id/images` (qits-2353) and `swarm/nodes/:id/networks` (qits-2354)
- * mount this page as a child of `:id` rather than at the segment that carries it.
+ * too because `swarm/nodes/:id/images` (qits-2353), `swarm/nodes/:id/containers` (qits-2352) and
+ * `swarm/nodes/:id/networks` (qits-2354) mount this page as a child of `:id` rather than at the
+ * segment that carries it.
  */
 function findIdParam(snapshot: ActivatedRouteSnapshot): string {
   for (let route: ActivatedRouteSnapshot | null = snapshot; route; route = route.parent) {
@@ -80,9 +81,9 @@ function resolveLandingPath(landingPath: string, snapshot: ActivatedRouteSnapsho
  * (qits-2344), `swarm/nodes` next (qits-2346), `swarm/nodes/:id` next (qits-2347),
  * `swarm/services/:id` next (qits-2345), `swarm/configs` next (qits-2348), `swarm/configs/:id` next
  * (qits-2349), `targets` next (qits-2351), a node's `images` tab next (qits-2353), a node's
- * `networks` tab next (qits-2354), and later siblings as they move too. Each mounting route says
- * where it goes and what to tell the reader through its own `data`, typed by
- * {@link LandingRedirectData}.
+ * `containers` tab next (qits-2352), a node's `networks` tab next (qits-2354), and later siblings
+ * as they move too. Each mounting route says where it goes and what to tell the reader through its
+ * own `data`, typed by {@link LandingRedirectData}.
  *
  * This draws almost nothing of its own: the route's own sentence naming where the page went, with
  * a link to it, for as long as the hand-off itself is still in flight — and the hand-off is what
