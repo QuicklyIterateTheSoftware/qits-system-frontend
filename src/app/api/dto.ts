@@ -114,14 +114,6 @@ export interface ContainerSummaryDto {
   readonly ports?: string | null;
 }
 
-/** A row of `docker volume ls`. */
-export interface VolumeSummaryDto {
-  readonly name: string;
-  readonly driver: string;
-  readonly mountpoint?: string | null;
-  readonly createdAt?: string | null;
-}
-
 /**
  * The tail of a container's log.
  *

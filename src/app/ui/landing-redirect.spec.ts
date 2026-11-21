@@ -20,11 +20,11 @@ const LANDING_ORIGIN = 'https://landing.qits.example';
  * The hand-off every moved System page mounts — `swarm/services` (qits-2344), `swarm/nodes`
  * (qits-2346), `swarm/nodes/:id` (qits-2347), `swarm/services/:id` (qits-2345), `swarm/configs`
  * (qits-2348), `swarm/configs/:id` (qits-2349), `swarm/secrets` (qits-2350), `targets` (qits-2351),
- * `swarm/nodes/:id/images` (qits-2353) and `swarm/nodes/:id/networks` (qits-2354) so far — the
- * point of this group is that the hand-off actually happens through real routing, rather than a
- * stubbed `ActivatedRoute` — `app.spec.ts` never instantiates this page either, so this is the only
- * place reaching one of these addresses through the real route table would show a wrong
- * destination.
+ * `swarm/nodes/:id/images` (qits-2353), `swarm/nodes/:id/networks` (qits-2354) and
+ * `swarm/nodes/:id/volumes` (qits-2355) so far — the point of this group is that the hand-off
+ * actually happens through real routing, rather than a stubbed `ActivatedRoute` — `app.spec.ts`
+ * never instantiates this page either, so this is the only place reaching one of these addresses
+ * through the real route table would show a wrong destination.
  */
 describe('LandingRedirect', () => {
   describe('reached through routing', () => {
@@ -80,8 +80,8 @@ describe('LandingRedirect', () => {
     });
 
     /**
-     * The bare node path hands off; of its tab children, `images` and `networks` do too (below) —
-     * the remaining two stay on `NodePage`, which `app.spec.ts` covers.
+     * The bare node path hands off; of its tab children, `images`, `volumes` and `networks` do too
+     * (below) — the remaining one, Containers, stays on `NodePage`, which `app.spec.ts` covers.
      */
     it('hands one swarm node off to the landing app, with its id encoded', async () => {
       await harness.navigateByUrl('/swarm/nodes/dev%20x');
@@ -109,6 +109,15 @@ describe('LandingRedirect', () => {
       await vi.waitFor(() => expect(navigateAway).toHaveBeenCalled());
       expect(navigateAway).toHaveBeenCalledWith(
         `${LANDING_ORIGIN}/system/swarm/nodes/a%2Fb/networks`,
+      );
+    });
+
+    /** The `volumes` tab's `:id` belongs to the parent `swarm/nodes/:id` route too (qits-2355). */
+    it("hands one node's volumes off to the landing app, with its id encoded", async () => {
+      await harness.navigateByUrl('/swarm/nodes/a%2Fb/volumes');
+      await vi.waitFor(() => expect(navigateAway).toHaveBeenCalled());
+      expect(navigateAway).toHaveBeenCalledWith(
+        `${LANDING_ORIGIN}/system/swarm/nodes/a%2Fb/volumes`,
       );
     });
 

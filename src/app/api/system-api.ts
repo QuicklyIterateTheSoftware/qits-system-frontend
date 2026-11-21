@@ -12,7 +12,6 @@ import {
   type ServiceSummaryDto,
   type TerminalDto,
   type TerminalShell,
-  type VolumeSummaryDto,
 } from './dto';
 
 /**
@@ -76,10 +75,6 @@ export class SystemApi {
         { params: new HttpParams().set('tail', tail) },
       ),
     );
-  }
-
-  volumes(nodeId: string): Promise<readonly VolumeSummaryDto[]> {
-    return firstValueFrom(this.http.get<VolumeSummaryDto[]>(`${this.nodeUrl(nodeId)}/volumes`));
   }
 
   /**

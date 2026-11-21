@@ -45,7 +45,6 @@ describe('SystemApi', () => {
     const services = api.services();
     http.expectOne('/system/api/swarm/services').flush([]);
     expect(await services).toEqual([]);
-
   });
 
   it('reads one swarm object by id, encoded', async () => {
@@ -73,11 +72,6 @@ describe('SystemApi', () => {
     );
     expect(request.request.params.get('tail')).toBe('50');
     request.flush({ text: '', truncated: false });
-  });
-
-  it('reads the remaining node resource at its own path', async () => {
-    void api.volumes('n1');
-    http.expectOne('/system/api/nodes/n1/volumes').flush([]);
   });
 
   /** GLANCES is find-or-create, so the body carries the kind and nothing else. */
